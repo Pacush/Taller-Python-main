@@ -118,9 +118,13 @@ def ventanaTablaUsuarios():
                 ventana.focus()
             else:
                 usr_= usr.Usuario()
-                usr_.setID(int(
-                    app.dbtm.maxSQL("usuario_id", "usuarios")[0]
-                )+ 1)
+                max = app.dbtm.maxSQL("usuario_id", "usuarios")[0]
+                if not max:
+                    usr_.setID(1)
+                else:
+                    usr_.setID(int(
+                        app.dbtm.maxSQL("usuario_id", "usuarios")[0]
+                    )+ 1)
                 usr_.setNombre(entry_nombre.get())
                 usr_.setUsername(entry_username.get())
                 usr_.setPassword(entry_password.get())

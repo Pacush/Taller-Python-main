@@ -5,86 +5,259 @@ import dbtaller_mecanico as dbtm
 import usuario as usr
 
 
-class VentanaUsuarios(tk.Tk):
+class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.config(width=500, height=500)
-        self.title("Usuarios")
+        self.title("Menú principal")
 
-        self.btn_ingresar = tk.Button(self, text="Ingresar usuario", command=lambda: self.buttonIngresar_clicked())
-        self.btn_ingresar.place(x=10, y=10)
+        self.label_titulo = tk.Label(self, text="Taller Mecánico", font=("Arial", 16, "bold"))
+        self.label_titulo.place(x=160, y=20)
+        
+        self.btn_usuarios = tk.Button(self, text="Usuarios", font=("Arial", 10, "bold"), command=lambda: ventanaTablaUsuarios())
+        self.btn_usuarios.place(x=210, y=80)
+        
+        self.dbtm = dbtm.dbtaller_mecanico()
 
-        self.label_buscar_id = tk.Label(self, text="Buscar por ID: ")
-        self.label_buscar_id.place(x=10, y=240)
-        self.entry_buscar_id = tk.Entry(self)
-        self.entry_buscar_id.place(x=10, y=270)
-        self.btn_buscar_id = tk.Button(self, text="Buscar por ID", command=lambda: self.buttonBuscar_clicked())
-        self.btn_buscar_id.place(x=10, y=300)
 
-        self.dbtm=dbtm.dbtaller_mecanico()
-
+def ventanaTablaUsuarios():
+    ventana = tk.Toplevel()
+    ventana.config(width=500, height=300)
+    ventana.title("Usuarios")
     
-    def buttonIngresar_clicked(self):
-        ventanaIngresarUsuario = VentanaIngresarUsuario(self)
+    columnas = ("ID", "Nombre", "Username", "Password", "Perfil")
+    tree = ttk.Treeview(ventana, columns=columnas, show="headings")
+    
+    tree.heading("ID", text="ID")
+    tree.heading("Nombre", text="Nombre")
+    tree.heading("Username", text="Username")
+    tree.heading("Password", text="Password")
+    tree.heading("Perfil", text="Perfil")
+    
+    tree.column("ID", width=50)
+    tree.column("Nombre", width=150)
+    tree.column("Username", width=150)
+    tree.column("Password", width=150)
+    tree.column("Perfil", width=150)
+    
+    usuarios = app.dbtm.obtenerUsuarios()
+    for usuario in usuarios:
+        tree.insert("", tk.END, values=usuario)
+        
+    tree.pack(pady=20, padx=10, expand=True, fill="both")
     
     
-    def buttonBuscar_clicked(self):
-        pass
+    frame_botones = tk.Frame(ventana)
+    frame_botones.pack(pady=10)
+
+    btn_actualizar = tk.Button(frame_botones, text="Actualizar tabla", command=lambda: actualizarTabla())
+    btn_agregar = tk.Button(frame_botones, text="Agregar usuario", command=lambda: ventanaIngresarUsuario())
+    btn_editar = tk.Button(frame_botones, text="Editar selección", command=lambda: ventanaEditarUsuario(tree.selection()))
+    btn_eliminar = tk.Button(frame_botones, text="Eliminar selección", command=lambda: ventanaEliminarUsuario(tree.selection()))
+    btn_buscar = tk.Button(frame_botones, text="Buscar por ID", command=lambda: buttonBuscar_clicked())
+    entry_id_buscar = tk.Entry(frame_botones)
+
+    btn_actualizar.pack(side="left", padx=5)
+    btn_agregar.pack(side="left", padx=5)
+    btn_editar.pack(side="left", padx=5)
+    btn_eliminar.pack(side="left", padx=5)
+    btn_buscar.pack(side="left", padx=5)
+    entry_id_buscar.pack(side="left", padx=5)
+    
+    def actualizarTabla():
+        for row in tree.get_children():
+            tree.delete(row)
+        usuarios = app.dbtm.obtenerUsuarios()
+        for usuario in usuarios:
+            tree.insert("", tk.END, values=usuario)
+            
+    def buttonBuscar_clicked():
+        try:
+            usr_ = usr.Usuario()
+            usr_.setID(int(entry_id_buscar.get()))
+            auxUser = app.dbtm.buscarUser(usr_)
+            
+            if auxUser:
+                ventanaBusquedaUsuario(auxUser)
+            else:
+                messagebox.showerror("Usuario no encontrado", "El usuario no se encuentra registrado en la DB.")
+            
+        except:
+            messagebox.showerror("Valor no válido", "Favor de ingresar un número entero para el ID.")
+            
+      
+    def ventanaIngresarUsuario():
+        ventana = tk.Toplevel()
+        ventana.config(width=300, height=300)
+        ventana.title("Ingresar nuevo usuario")
+        label_nombre = tk.Label(ventana, text="Nombre: ")
+        label_nombre.place(x=10, y=10)
+        entry_nombre = tk.Entry(ventana)
+        entry_nombre.place(x=10, y=30)
+        label_username = tk.Label(ventana, text="Username: ")
+        label_username.place(x=10, y=60)
+        entry_username = tk.Entry(ventana)
+        entry_username.place(x=10, y=80)
+
+        label_password = tk.Label(ventana, text="Password: ")
+        label_password.place(x=10, y=110)
+        entry_password = tk.Entry(ventana)
+        entry_password.place(x=10, y=140)
+
+        label_perfil = tk.Label(ventana, text="Perfil: ")
+        label_perfil.place(x=10, y=170)
+        entry_perfil = tk.Entry(ventana)
+        entry_perfil.place(x=10, y=190)
+        btn_salvar = tk.Button(ventana, text="Guardar", command=lambda: buttonSalvar_clicked())
+        btn_salvar.place(x=10, y=240)
 
 
-class VentanaIngresarUsuario(Toplevel):
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.config(width=300, height=300)
-        self.title("Ingresar usuario")
+        def buttonSalvar_clicked():
+            if entry_nombre.get() == "" or entry_username.get() == "" or entry_password.get() == "" or entry_perfil.get() == "":
+                messagebox.showerror("Campos faltantes", "Faltan campos por llenar para guardar el registro.")
+                ventana.focus()
+            else:
+                usr_= usr.Usuario()
+                usr_.setID(int(
+                    app.dbtm.maxSQL("usuario_id", "usuarios")[0]
+                )+ 1)
+                usr_.setNombre(entry_nombre.get())
+                usr_.setUsername(entry_username.get())
+                usr_.setPassword(entry_password.get())
+                usr_.setPerfil(entry_perfil.get())
+                try:
+                    app.dbtm.guardarUser(usr_)
+                    messagebox.showinfo("Registro exitoso", "Se ha guardado correctamente al usuario en los registros.")
+                    ventana.destroy()
+                    actualizarTabla()
+                except:
+                    messagebox.showerror("Error", "Hubo un error al intentar ingresar el registro. Revisa tus datos.")
 
-        self.label_nombre = tk.Label(self, text="Nombre: ")
-        self.label_nombre.place(x=10, y=10)
-        self.entry_nombre = tk.Entry(self)
-        self.entry_nombre.place(x=10, y=30)
 
-        self.label_username = tk.Label(self, text="Username: ")
-        self.label_username.place(x=10, y=60)
-        self.entry_username = tk.Entry(self)
-        self.entry_username.place(x=10, y=80)
-        
-        self.label_password = tk.Label(self, text="Password: ")
-        self.label_password.place(x=10, y=110)
-        self.entry_password = tk.Entry(self)
-        self.entry_password.place(x=10, y=140)
-        
-        self.label_perfil = tk.Label(self, text="Perfil: ")
-        self.label_perfil.place(x=10, y=170)
-        self.entry_perfil = tk.Entry(self)
-        self.entry_perfil.place(x=10, y=190)
+    def ventanaBusquedaUsuario(auxUser: usr.Usuario):
 
-        self.btn_salvar = tk.Button(self, text="Guardar", command=lambda: self.buttonSalvar_clicked())
-        self.btn_salvar.place(x=10, y=240)
+        ventana = tk.Toplevel()
+        ventana.config(width=300, height=300)
+        ventana.title("Usuario encontrado")
+        label_id = tk.Label(ventana, text="ID: ", font=("Arial", 10, "bold"))
+        label_id.place(x=10, y=10)
+        label_id_res = tk.Label(ventana, text=str(auxUser.getID()))
+        label_id_res.place(x=10, y=30)
+
+        label_nombre = tk.Label(ventana, text="Nombre: ", font=("Arial", 10, "bold"))
+        label_nombre.place(x=10, y=60)
+        label_nombre_res = tk.Label(ventana, text=auxUser.getNombre())
+        label_nombre_res.place(x=10, y=80)
+
+        label_username = tk.Label(ventana, text="Username: ", font=("Arial", 10, "bold"))
+        label_username.place(x=10, y=110)
+        label_username_res = tk.Label(ventana, text=auxUser.getUsername())
+        label_username_res.place(x=10, y=130)
+
+        label_password = tk.Label(ventana, text="Password: ", font=("Arial", 10, "bold"))
+        label_password.place(x=10, y=160)
+        label_password_res = tk.Label(ventana, text=auxUser.getPassword())
+        label_password_res.place(x=10, y=180)
+
+        label_perfil = tk.Label(ventana, text="Perfil: ", font=("Arial", 10, "bold"))
+        label_perfil.place(x=10, y=210)
+        label_perfil_res = tk.Label(ventana, text=auxUser.getPerfil())
+        label_perfil_res.place(x=10, y=240)
+
+    def ventanaEditarUsuario(seleccion: ttk.Treeview.selection):
         
-        
-    def buttonSalvar_clicked(self):
-        
-        if self.entry_nombre.get() == "" or self.entry_username.get() == "" or self.entry_password.get() == "" or self.entry_perfil.get() == "":
-            messagebox.showerror("Campos faltantes", "Faltan campos por llenar para guardar el registro.")
-            self.focus()
+        if not seleccion:
+            messagebox.showerror("Sin selección", "No hay ningún elemento de la tabla seleccionado.")
+            return
+            
         else:
+            valores = tree.item(seleccion[0], "values")
             
-            usr_= usr.Usuario()
-            usr_.setID(int(
-                app.dbtm.maxSQL("usuario_id", "usuarios")[0]
-            )+ 1)
-            usr_.setNombre(self.entry_nombre.get())
-            usr_.setUsername(self.entry_username.get())
-            usr_.setPassword(self.entry_password.get())
-            usr_.setPerfil(self.entry_perfil.get())
-            try:
-                app.dbtm.guardarUser(usr_)
-                messagebox.showinfo("Registro exitoso", "Se ha guardado correctamente al usuario en los registros.")
-                self.destroy()
-            except:
-                messagebox.showerror("Error", "Hubo un error al intentar ingresar el registro. Revisa tus datos.")
-            
-        
+            ventana = tk.Toplevel()
+            ventana.config(width=300, height=500)
+            ventana.title("Editar usuario")
 
-app=VentanaUsuarios()
+            label_id = tk.Label(ventana, text="ID: ", font=("Arial", 10, "bold"))
+            label_id.place(x=10, y=10)
+            label_id_res = tk.Label(ventana, text= valores[0])
+            label_id_res.place(x=10, y=30)
+
+            label_nombre = tk.Label(ventana, text="Nombre: ", font=("Arial", 10, "bold"))
+            label_nombre.place(x=10, y=60)
+            entry_nombre = tk.Entry(ventana)
+            entry_nombre.place(x=10, y=80)
+
+            label_username = tk.Label(ventana, text="Username: ", font=("Arial", 10, "bold"))
+            label_username.place(x=10, y=110)
+            entry_username = tk.Entry(ventana)
+            entry_username.place(x=10, y=130)
+
+            label_password = tk.Label(ventana, text="Password: ", font=("Arial", 10, "bold"))
+            label_password.place(x=10, y=160)
+            entry_password = tk.Entry(ventana)
+            entry_password.place(x=10, y=180)
+
+            label_perfil = tk.Label(ventana, text="Perfil: ", font=("Arial", 10, "bold"))
+            label_perfil.place(x=10, y=210)
+            entry_perfil = tk.Entry(ventana)
+            entry_perfil.place(x=10, y=240)
+
+            btn_guardar = tk.Button(ventana, text="Guardar", command=lambda: guardar_edicion())
+            btn_guardar.place(x=10, y=290)
+            
+            entry_nombre.insert(0, valores[1])
+            entry_username.insert(0, valores[2])
+            entry_password.insert(0, valores[3])
+            entry_perfil.insert(0, valores[4])
+            
+            def guardar_edicion():
+                try:
+                    
+                    if entry_nombre.get() == "" or entry_username.get() == "" or entry_password.get() == "" or entry_perfil.get() == "":
+                        messagebox.showerror("Campos faltantes", "Faltan campos por llenar para editar el registro.")
+                        ventana.focus()
+                    else:
+                        auxUser = usr.Usuario()
+                        auxUser.setID(int(label_id_res.cget("text")))
+                        auxUser.setNombre(entry_nombre.get())
+                        auxUser.setUsername(entry_username.get())
+                        auxUser.setPassword(entry_password.get())
+                        auxUser.setPerfil(entry_perfil.get())
+
+                        edicion = app.dbtm.editarUser(auxUser)
+                        if edicion:
+                            messagebox.showinfo("Edición exitosa", "Se han editado correctamente los datos del usuario.")
+                            ventana.destroy()
+                            actualizarTabla()
+                        else:
+                            messagebox.showerror("Edición fallida", "No ha sido posible editar los datos del usuario.")
+                            ventana.destroy()
+                    
+                except:
+                    messagebox.showerror("Valores inválidos", "Favor de ingresar valores adecuados.")
+                    ventana.focus()
+    
+    def ventanaEliminarUsuario(seleccion: ttk.Treeview.selection):
+        if not seleccion:
+            messagebox.showerror("Sin selección", "No hay ningún elemento de la tabla seleccionado.")
+            return
+            
+        else:
+            valores = tree.item(seleccion[0], "values")
+            confirmation = messagebox.askyesno("¿Desea continuar?", f"¿Desea eliminar al usuario con id {valores[0]}?")
+            if confirmation:
+                if app.dbtm.eliminarUser(int(valores[0])):
+                    messagebox.showinfo("Eliminación exitosa", f"Se ha eliminado satisfactoriamente al usuario con id {valores[0]}.")
+                    actualizarTabla()
+                else:
+                    messagebox.showerror("Eliminación fallida", "No ha sido posible elimiar al usuario.")
+                    
+            else:
+                ventana.focus()
+         
+        
+            
+            
+
+app=App()
 app.mainloop()

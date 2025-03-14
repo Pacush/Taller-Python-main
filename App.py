@@ -106,15 +106,20 @@ def ventanaTablaUsuarios():
 
         label_perfil = tk.Label(ventana, text="Perfil: ")
         label_perfil.place(x=10, y=170)
-        entry_perfil = tk.Entry(ventana)
-        entry_perfil.place(x=10, y=190)
+        combo_perfil = ttk.Combobox(ventana, values=["Administrador","Auxliar","Mecánico"])
+        combo_perfil.place(x=10, y=190)
         btn_salvar = tk.Button(ventana, text="Guardar", command=lambda: buttonSalvar_clicked())
         btn_salvar.place(x=10, y=240)
 
 
         def buttonSalvar_clicked():
-            if entry_nombre.get() == "" or entry_username.get() == "" or entry_password.get() == "" or entry_perfil.get() == "":
+            if entry_nombre.get() == "" or entry_username.get() == "" or entry_password.get() == "" or combo_perfil.get() == "":
                 messagebox.showerror("Campos faltantes", "Faltan campos por llenar para guardar el registro.")
+                ventana.focus()
+
+            elif (combo_perfil.get() != "Administrador") and (combo_perfil.get() != "Auxiliar") and (combo_perfil.get() != "Mecánico"):
+                messagebox.showerror("Valores inválidos", "Favor de ingresar valores adecuados.")
+                print(combo_perfil.get())
                 ventana.focus()
             else:
                 usr_= usr.Usuario()
@@ -128,7 +133,7 @@ def ventanaTablaUsuarios():
                 usr_.setNombre(entry_nombre.get())
                 usr_.setUsername(entry_username.get())
                 usr_.setPassword(entry_password.get())
-                usr_.setPerfil(entry_perfil.get())
+                usr_.setPerfil(combo_perfil.get())
                 try:
                     app.dbtm.guardarUser(usr_)
                     messagebox.showinfo("Registro exitoso", "Se ha guardado correctamente al usuario en los registros.")
@@ -203,8 +208,8 @@ def ventanaTablaUsuarios():
 
             label_perfil = tk.Label(ventana, text="Perfil: ", font=("Arial", 10, "bold"))
             label_perfil.place(x=10, y=210)
-            entry_perfil = tk.Entry(ventana)
-            entry_perfil.place(x=10, y=240)
+            combo_perfil = ttk.Combobox(ventana, values=["Administrador", "Auxiliar", "Mecánico"])
+            combo_perfil.place(x=10, y=240)
 
             btn_guardar = tk.Button(ventana, text="Guardar", command=lambda: guardar_edicion())
             btn_guardar.place(x=10, y=290)
@@ -212,21 +217,25 @@ def ventanaTablaUsuarios():
             entry_nombre.insert(0, valores[1])
             entry_username.insert(0, valores[2])
             entry_password.insert(0, valores[3])
-            entry_perfil.insert(0, valores[4])
+            combo_perfil.insert(0, valores[4])
             
             def guardar_edicion():
                 try:
                     
-                    if entry_nombre.get() == "" or entry_username.get() == "" or entry_password.get() == "" or entry_perfil.get() == "":
+                    if entry_nombre.get() == "" or entry_username.get() == "" or entry_password.get() == "" or combo_perfil.get() == "":
                         messagebox.showerror("Campos faltantes", "Faltan campos por llenar para editar el registro.")
                         ventana.focus()
+                    elif (combo_perfil.get() != "Administrador") and (combo_perfil.get() != "Auxiliar") and (combo_perfil.get() != "Mecánico"):
+                        messagebox.showerror("Valores inválidos", "Favor de ingresar valores adecuados.")
+                        ventana.focus()
+                        print(combo_perfil.get() != "Administrador")
                     else:
                         auxUser = usr.Usuario()
                         auxUser.setID(int(label_id_res.cget("text")))
                         auxUser.setNombre(entry_nombre.get())
                         auxUser.setUsername(entry_username.get())
                         auxUser.setPassword(entry_password.get())
-                        auxUser.setPerfil(entry_perfil.get())
+                        auxUser.setPerfil(combo_perfil.get())
 
                         edicion = app.dbtm.editarUser(auxUser)
                         if edicion:
@@ -237,9 +246,10 @@ def ventanaTablaUsuarios():
                             messagebox.showerror("Edición fallida", "No ha sido posible editar los datos del usuario.")
                             ventana.destroy()
                     
-                except:
+                except Exception as e:
                     messagebox.showerror("Valores inválidos", "Favor de ingresar valores adecuados.")
                     ventana.focus()
+                    print(e)
     
     def ventanaEliminarUsuario(seleccion: ttk.Treeview.selection):
         if not seleccion:

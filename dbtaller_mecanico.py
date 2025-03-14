@@ -57,7 +57,8 @@ class dbtaller_mecanico:
             self.cursor1.execute(self.sql, valores)
             self.conn.commit()
             return True
-        except:
+        except Exception as e:
+            print(e)
             return False
         
     def eliminarUser(self, id: int):

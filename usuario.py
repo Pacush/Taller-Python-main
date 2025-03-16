@@ -1,5 +1,5 @@
 import conexion as con
-import dbtaller_mecanico
+import dbusuarios
 
 
 class Usuario:

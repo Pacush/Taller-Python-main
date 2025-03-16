@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import END, Toplevel, messagebox, ttk
 
-import dbtaller_mecanico as dbtm
+import dbusuarios as dbu
 import usuario as usr
 
 
@@ -11,13 +11,32 @@ class App(tk.Tk):
         self.config(width=500, height=500)
         self.title("Menú principal")
 
-        self.label_titulo = tk.Label(self, text="Taller Mecánico", font=("Arial", 16, "bold"))
+        self.label_titulo = tk.Label(self, text="Taller Mecánico", font=("Arial", 16, "bold"), bg="black", fg="white")
         self.label_titulo.place(x=160, y=20)
         
         self.btn_usuarios = tk.Button(self, text="Usuarios", font=("Arial", 10, "bold"), command=lambda: ventanaTablaUsuarios())
         self.btn_usuarios.place(x=210, y=80)
         
-        self.dbtm = dbtm.dbtaller_mecanico()
+        self.menu_bar = tk.Menu(self)
+        
+        self.menu_archivo = tk.Menu(self.menu_bar, tearoff=0)
+        self.menu_archivo.add_command(label="Usuario", command=lambda: ventanaUsuarios())
+        self.menu_archivo.add_separator()
+        self.menu_archivo.add_command(label="Clientes", command=lambda: print("Clientes"))
+        self.menu_archivo.add_separator()
+        self.menu_archivo.add_command(label="Vehiculos", command=lambda: print("Vehiculos"))
+        self.menu_archivo.add_separator()
+        self.menu_archivo.add_command(label="Reparaciones", command=lambda: print("Reparaciones"))
+        self.menu_archivo.add_separator()
+        self.menu_archivo.add_command(label="Piezas", command=lambda: print("Piezas"))
+        self.menu_archivo.add_separator()
+        self.menu_archivo.add_command(label="Salir", command=self.quit)
+        
+        self.menu_bar.add_cascade(label="File", menu=self.menu_archivo)
+        
+        self.config(menu=self.menu_bar, bg="black")
+        
+        self.dbu = dbu.dbtaller_mecanico()
 
 
 def ventanaTablaUsuarios():
@@ -40,7 +59,7 @@ def ventanaTablaUsuarios():
     tree.column("Password", width=150)
     tree.column("Perfil", width=150)
     
-    usuarios = app.dbtm.obtenerUsuarios()
+    usuarios = app.dbu.obtenerUsuarios()
     for usuario in usuarios:
         tree.insert("", tk.END, values=usuario)
         
@@ -67,7 +86,7 @@ def ventanaTablaUsuarios():
     def actualizarTabla():
         for row in tree.get_children():
             tree.delete(row)
-        usuarios = app.dbtm.obtenerUsuarios()
+        usuarios = app.dbu.obtenerUsuarios()
         for usuario in usuarios:
             tree.insert("", tk.END, values=usuario)
             
@@ -75,7 +94,7 @@ def ventanaTablaUsuarios():
         try:
             usr_ = usr.Usuario()
             usr_.setID(int(entry_id_buscar.get()))
-            auxUser = app.dbtm.buscarUser(usr_)
+            auxUser = app.dbu.buscarUser(usr_)
             
             if auxUser:
                 ventanaBusquedaUsuario(auxUser)
@@ -123,19 +142,19 @@ def ventanaTablaUsuarios():
                 ventana.focus()
             else:
                 usr_= usr.Usuario()
-                max = app.dbtm.maxSQL("usuario_id", "usuarios")[0]
+                max = app.dbu.maxSQL("usuario_id", "usuarios")[0]
                 if not max:
                     usr_.setID(1)
                 else:
                     usr_.setID(int(
-                        app.dbtm.maxSQL("usuario_id", "usuarios")[0]
+                        app.dbu.maxSQL("usuario_id", "usuarios")[0]
                     )+ 1)
                 usr_.setNombre(entry_nombre.get())
                 usr_.setUsername(entry_username.get())
                 usr_.setPassword(entry_password.get())
                 usr_.setPerfil(combo_perfil.get())
                 try:
-                    app.dbtm.guardarUser(usr_)
+                    app.dbu.guardarUser(usr_)
                     messagebox.showinfo("Registro exitoso", "Se ha guardado correctamente al usuario en los registros.")
                     ventana.destroy()
                     actualizarTabla()
@@ -237,7 +256,7 @@ def ventanaTablaUsuarios():
                         auxUser.setPassword(entry_password.get())
                         auxUser.setPerfil(combo_perfil.get())
 
-                        edicion = app.dbtm.editarUser(auxUser)
+                        edicion = app.dbu.editarUser(auxUser)
                         if edicion:
                             messagebox.showinfo("Edición exitosa", "Se han editado correctamente los datos del usuario.")
                             ventana.destroy()
@@ -260,7 +279,7 @@ def ventanaTablaUsuarios():
             valores = tree.item(seleccion[0], "values")
             confirmation = messagebox.askyesno("¿Desea continuar?", f"¿Desea eliminar al usuario con id {valores[0]}?")
             if confirmation:
-                if app.dbtm.eliminarUser(int(valores[0])):
+                if app.dbu.eliminarUser(int(valores[0])):
                     messagebox.showinfo("Eliminación exitosa", f"Se ha eliminado satisfactoriamente al usuario con id {valores[0]}.")
                     actualizarTabla()
                 else:
@@ -269,9 +288,155 @@ def ventanaTablaUsuarios():
             else:
                 ventana.focus()
          
-        
-            
-            
 
+
+def ventanaUsuarios():
+    ventana = tk.Toplevel()
+    ventana.config(width=500, height=500, bg="black")
+    ventana.title("Usuarios")
+    
+    label_id_buscar = tk.Label(ventana, text="Ingrese ID a buscar:", bg="black", fg="white")
+    label_id_buscar.place(x=30, y=10)
+    entry_id_buscar = tk.Entry(ventana, width=30)
+    entry_id_buscar.place(x=140, y=10)
+    btn_id_buscar = tk.Button(ventana, text="Buscar", command=lambda: buttonBuscar_clicked(), width=10)
+    btn_id_buscar.place(x=330, y=10)
+    
+    label_id = tk.Label(ventana, text="ID:", bg="black", fg="white")
+    label_id.place(x=30, y=50)
+    entry_id = tk.Entry(ventana, state="disabled")
+    entry_id.place(x=100, y=50)
+    
+    label_nombre = tk.Label(ventana, text="Nombre:", bg="black", fg="white")
+    label_nombre.place(x=30, y=80)
+    entry_nombre = tk.Entry(ventana, width=50)
+    entry_nombre.place(x=100, y=80)
+    
+    label_username = tk.Label(ventana, text="Username:", bg="black", fg="white")
+    label_username.place(x=30, y=110)
+    entry_username = tk.Entry(ventana, width=50)
+    entry_username.place(x=100, y=110)
+    
+    label_password = tk.Label(ventana, text="Password:", bg="black", fg="white")
+    label_password.place(x=30, y=140)
+    entry_password = tk.Entry(ventana, width=30, show="*")
+    entry_password.place(x=100, y=140)
+    
+    label_perfil = tk.Label(ventana, text="Perfil:", bg="black", fg="white")
+    label_perfil.place(x=30, y=170)
+    combo_perfil = ttk.Combobox(ventana, values=perfiles, width=30)
+    combo_perfil.place(x=100, y=170)
+    
+    frame_botones = tk.Frame(ventana, bg="black")
+    frame_botones.place(x=30, y=210)
+    
+    btn_nuevo = tk.Button(frame_botones, text="Nuevo", state="normal", command=lambda: buttonNuevo_clicked())
+    btn_guardar = tk.Button(frame_botones, text="Guardar", state="disabled", command=lambda: buttonGuardar_clicked())
+    btn_cancelar = tk.Button(frame_botones, text="Cancelar", state="disabled", command=lambda: buttonCancelar_clicked())
+    btn_editar = tk.Button(frame_botones, text="Editar", state="disabled")
+    btn_remover = tk.Button(frame_botones, text="Remover", state="disabled")
+    
+    btn_nuevo.pack(side="left", padx=5)
+    btn_guardar.pack(side="left", padx=5)
+    btn_cancelar.pack(side="left", padx=5)
+    btn_editar.pack(side="left", padx=5)
+    btn_remover.pack(side="left", padx=5)
+    
+    
+    
+    def buttonGuardar_clicked():
+            if entry_nombre.get() == "" or entry_username.get() == "" or entry_password.get() == "" or combo_perfil.get() == "":
+                messagebox.showerror("Campos faltantes", "Faltan campos por llenar para guardar el registro.")
+                ventana.focus()
+
+            elif not (combo_perfil.get() in perfiles):
+                messagebox.showerror("Valores inválidos", "Favor de ingresar valores adecuados.")
+                ventana.focus()
+            else:
+                auxUser= usr.Usuario()
+                newID = int(entry_id.get())
+                if not newID:
+                    auxUser.setID(1)
+                else:
+                    auxUser.setID(newID)
+                    auxUser.setNombre(entry_nombre.get())
+                    auxUser.setUsername(entry_username.get())
+                    auxUser.setPassword(entry_password.get())
+                    auxUser.setPerfil(combo_perfil.get())
+                try:
+                    app.dbu.guardarUser(auxUser)
+                    messagebox.showinfo("Registro exitoso", f"Se ha guardado correctamente al usuario en los registros con el ID {auxUser.getID()}.", )
+                    ventana.focus()
+                    
+                    entry_id.config(state="normal")
+                    entry_id.delete(0, END)
+                    entry_id.config(state="disabled")
+                    entry_nombre.delete(0, END)
+                    entry_username.delete(0, END)
+                    entry_password.delete(0, END)
+                    combo_perfil.delete(0, END)
+                    btn_guardar.config(state="disabled")
+                    btn_nuevo.config(state="normal")
+                    
+                except Exception as e:
+                    messagebox.showerror("Error", "Hubo un error al intentar ingresar el registro. Revisa tus datos.")
+                    print(e)
+
+
+    def buttonBuscar_clicked():
+        try:
+            usr_ = usr.Usuario()
+            usr_.setID(int(entry_id_buscar.get()))
+            auxUser = app.dbu.buscarUser(usr_)
+            
+            if auxUser:
+                entry_id.delete(0, END)
+                entry_nombre.delete(0, END)
+                entry_nombre.insert(0, auxUser.getNombre())
+                entry_username.delete(0, END)
+                entry_username.insert(0, auxUser.getUsername())
+                entry_password.delete(0, END)
+                entry_password.insert(0, auxUser.getPassword())
+                combo_perfil.delete(0, END)
+                combo_perfil.insert(0, auxUser.getPerfil())
+                
+                btn_cancelar.config(state="normal")
+                btn_editar.config(state="normal")
+                btn_remover.config(state="normal")
+                
+                
+            else:
+                messagebox.showerror("Usuario no encontrado", "El usuario no se encuentra registrado en la DB.")
+                ventana.focus()
+            
+        except Exception as e:
+            messagebox.showerror("Valor no válido", "Favor de ingresar un número entero en el campo 'ID'.")
+            print(e)
+            ventana.focus()
+            
+    def buttonCancelar_clicked():
+        entry_id.delete(0, END)
+        entry_id_buscar.delete(0, END)
+        entry_nombre.delete(0, END)
+        entry_username.delete(0, END)
+        entry_password.delete(0, END)
+        combo_perfil.delete(0, END)
+        btn_nuevo.config(state="normal")
+        btn_cancelar.config(state="disabled")
+        btn_editar.config(state="disabled")
+        btn_remover.config(state="disabled")
+        
+    def buttonNuevo_clicked():
+        btn_nuevo.config(state="disabled")
+        newID = app.dbu.maxSQL("usuario_id", "usuarios")[0] + 1
+        entry_id.config(state="normal")
+        entry_id.insert(0, newID)
+        entry_id.config(state="disabled")
+        btn_guardar.config(state="normal")
+        
+
+
+
+perfiles = ["Administrador", "Auxiliar", "Mecanico"]
 app=App()
 app.mainloop()

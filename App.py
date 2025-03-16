@@ -14,8 +14,8 @@ class App(tk.Tk):
         self.label_titulo = tk.Label(self, text="Taller Mecánico", font=("Arial", 16, "bold"), bg="black", fg="white")
         self.label_titulo.place(x=160, y=20)
         
-        self.btn_usuarios = tk.Button(self, text="Usuarios", font=("Arial", 10, "bold"), command=lambda: ventanaTablaUsuarios())
-        self.btn_usuarios.place(x=210, y=80)
+        #self.btn_usuarios = tk.Button(self, text="Usuarios", font=("Arial", 10, "bold"), command=lambda: ventanaTablaUsuarios())
+        #self.btn_usuarios.place(x=210, y=80)
         
         self.menu_bar = tk.Menu(self)
         
@@ -333,8 +333,8 @@ def ventanaUsuarios():
     btn_nuevo = tk.Button(frame_botones, text="Nuevo", state="normal", command=lambda: buttonNuevo_clicked())
     btn_guardar = tk.Button(frame_botones, text="Guardar", state="disabled", command=lambda: buttonGuardar_clicked())
     btn_cancelar = tk.Button(frame_botones, text="Cancelar", state="disabled", command=lambda: buttonCancelar_clicked())
-    btn_editar = tk.Button(frame_botones, text="Editar", state="disabled")
-    btn_remover = tk.Button(frame_botones, text="Remover", state="disabled")
+    btn_editar = tk.Button(frame_botones, text="Editar", state="disabled", command=lambda: buttonEditar_clicked())
+    btn_remover = tk.Button(frame_botones, text="Remover", state="disabled", command=lambda: ventanaEliminarUsuario())
     
     btn_nuevo.pack(side="left", padx=5)
     btn_guardar.pack(side="left", padx=5)
@@ -390,7 +390,10 @@ def ventanaUsuarios():
             auxUser = app.dbu.buscarUser(usr_)
             
             if auxUser:
+                entry_id.config(state="normal")
                 entry_id.delete(0, END)
+                entry_id.insert(0, auxUser.getID())
+                entry_id.config(state="disabled")
                 entry_nombre.delete(0, END)
                 entry_nombre.insert(0, auxUser.getNombre())
                 entry_username.delete(0, END)
@@ -415,7 +418,9 @@ def ventanaUsuarios():
             ventana.focus()
             
     def buttonCancelar_clicked():
+        entry_id.config(state="normal")
         entry_id.delete(0, END)
+        entry_id.config(state="disabled")
         entry_id_buscar.delete(0, END)
         entry_nombre.delete(0, END)
         entry_username.delete(0, END)
@@ -434,7 +439,54 @@ def ventanaUsuarios():
         entry_id.config(state="disabled")
         btn_guardar.config(state="normal")
         
-
+    def buttonEditar_clicked():
+        try:
+            if entry_nombre.get() == "" or entry_username.get() == "" or entry_password.get() == "" or combo_perfil.get() == "":
+                messagebox.showerror("Campos faltantes", "Faltan campos por llenar para editar el registro.")
+                ventana.focus()
+            elif not (combo_perfil.get() in perfiles):
+                messagebox.showerror("Valores inválidos", "Favor de ingresar valores adecuados.")
+                ventana.focus()
+            else:
+                auxUser = usr.Usuario()
+                auxUser.setID(int(entry_id.get()))
+                auxUser.setNombre(entry_nombre.get())
+                auxUser.setUsername(entry_username.get())
+                auxUser.setPassword(entry_password.get())
+                auxUser.setPerfil(combo_perfil.get())
+                edicion = app.dbu.editarUser(auxUser)
+                if edicion:
+                    messagebox.showinfo("Edición exitosa", "Se han editado correctamente los datos del usuario.")
+                    buttonCancelar_clicked()
+                    ventana.focus()
+                    
+                else:
+                    messagebox.showerror("Edición fallida", "No ha sido posible editar los datos del usuario.")
+                    ventana.focus()
+                
+        except Exception as e:
+            messagebox.showerror("Valores inválidos", "Favor de ingresar valores adecuados.")
+            ventana.focus()
+            print(e)
+            
+    def ventanaEliminarUsuario():
+        auxUsr = usr.Usuario()
+        auxUsr.setID(int(entry_id.get()))
+        
+        confirmation = messagebox.askyesno("¿Desea continuar?", f"¿Desea eliminar al usuario con ID {auxUsr.getID()}?")
+        if confirmation:
+            if app.dbu.eliminarUser(auxUsr.getID()):
+                messagebox.showinfo("Eliminación exitosa", f"Se ha eliminado satisfactoriamente al usuario con ID {auxUsr.getID()}.")
+                buttonCancelar_clicked()
+                ventana.focus()
+                
+            else:
+                messagebox.showerror("Eliminación fallida", "No ha sido posible elimiar al usuario.")
+                ventana.focus()
+                
+        else:
+            ventana.focus()
+            
 
 
 perfiles = ["Administrador", "Auxiliar", "Mecanico"]

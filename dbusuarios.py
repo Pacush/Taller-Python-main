@@ -1,9 +1,37 @@
 import conexion as con
 import usuario as usr
 
+class dbusuarios:
+    def autentificar(self, usuario: usr.Usuario):
+        try:
+            self.con=con.conexion()
+            self.conn=self.con.open()
+            self.cursor1=self.conn.cursor()
+            aux=None
+            self.sql="SELECT * FROM usuarios WHERE username='"+usuario.getUsername()+"'"
+            self.cursor1.execute(self.sql)
+            row=self.cursor1.fetchone()
+            self.conn.commit()
+            self.conn.close()
+            if row[0] is not None:
+                if usuario.getPassword()==row[3]:
+                    aux=usr.Usuario()
+                    aux.setID(int(row[0]))
+                    aux.setNombre(row[1])
+                    aux.setUsername(row[2])
+                    aux.setPassword(row[3])
+                    aux.setPerfil(row[4])
+                    return aux
+                else:
+                    return 0
+            else:
+                return 1
+                self.conn.close()
+        except Exception as e:
+            print(e)
+            return aux
+        
 
-class dbtaller_mecanico:
-    
     def obtenerUsuarios(self):
         self.con = con.conexion()
         self.conn = self.con.open()

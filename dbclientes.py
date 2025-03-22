@@ -72,14 +72,14 @@ class dbclientes:
             print(e)
             return False
         
-    def dictClientesId(self):
+    def dictClientesId(self, usrLoggedId):
         try:
             self.con = con.conexion()
             self.conn = self.con.open()
             self.cursor1 = self.conn.cursor()
-            self.sql = "SELECT cliente_id, nombre FROM clientes"
-            valores = (id,)
-            self.cursor1.execute(self.sql)
+            self.sql = "SELECT cliente_id, nombre FROM clientes WHERE usuario_id = %s"
+            valores = (usrLoggedId,)
+            self.cursor1.execute(self.sql, valores)
             rows = self.cursor1.fetchall()
             return rows
         except Exception as e:

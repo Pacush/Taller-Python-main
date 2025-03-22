@@ -2,11 +2,11 @@ import tkinter as tk
 from tkinter import END, Toplevel, messagebox, ttk
 
 import cliente as cli
-import vehiculo as veh
 import dbclientes as dbc
 import dbusuarios as dbu
 import dbvehiculos as dbv
 import usuario as usr
+import vehiculo as veh
 
 perfiles = ["Administrador", "Auxiliar", "Mecanico"]
 
@@ -485,14 +485,14 @@ def ventanaVehiculos(app: App):
     ventana.config(width=500, height=500, bg="black")
     ventana.title("Vehiculos")
     
-    cliNombresID = app.dbc.dictClientesId()
+    cliNombresID = app.dbc.dictClientesId(app.userLogged.getID())
     cliNombres = []
     cliIDs = []
     for cliente in cliNombresID:
         cliIDs.append(int(cliente[0]))
         cliNombres.append(cliente[1])
     
-    label_id_buscar = tk.Label(ventana, text="Ingrese ID a buscar:", bg="black", fg="white")
+    label_id_buscar = tk.Label(ventana, text="Ingrese matricula a buscar:", bg="black", fg="white")
     label_id_buscar.place(x=30, y=10)
     entry_id_buscar = tk.Entry(ventana, width=30)
     entry_id_buscar.place(x=140, y=10)
@@ -544,28 +544,27 @@ def ventanaVehiculos(app: App):
     def buttonBuscar_clicked():
         try:
             veh_ = veh.Vehiculo()
-            veh_.setID(int(entry_id_buscar.get()))
-            auxCli = app.dbc.buscarCliente(cli_)
-            
-            if auxCli:
-                entry_matricula.insert(0, auxCli.getID())
-                entry_nombre.delete(0, END)
-                entry_nombre.insert(0, auxCli.getNombre())
-                entry_rfc.delete(0, END)
-                entry_rfc.insert(0, auxCli.getRfc())
-                entry_telefono.delete(0, END)
-                entry_telefono.insert(0, auxCli.getTelefono())
+            veh_.setMatricula(entry_id_buscar.get())
+            auxVeh = app.dbv.buscarVehiculos(veh_)
+            if auxVeh:
+                idCliente = veh_.getClienteID()
+                cliNombre = cliNombres[cliIDs.index(idCliente)]
+                entry_matricula.delete(0, END)
+                entry_matricula.insert(0, auxVeh.getMatricula())
+                combo_cliente.delete(0, END)
+                combo_cliente.insert(0, cliNombre)
+                entry_marca.delete(0, END)
+                entry_marca.insert(0, auxVeh.getMarca())
+                entry_modelo.delete(0, END)
+                entry_modelo.insert(0, auxVeh.getModelo())
                 btn_cancelar.config(state="normal")
                 btn_editar.config(state="normal")
                 btn_remover.config(state="normal")
-                
-                
             else:
-                messagebox.showerror("Cliente no encontrado", "El cliente no se encuentra registrado en la DB.")
+                messagebox.showerror("Vehiculo no encontrado", "El vehiculo no se encuentra registrado en la DB.")
                 ventana.focus()
-            
         except Exception as e:
-            messagebox.showerror("Valor no válido", "Favor de ingresar un número entero en el campo 'ID'.")
+            messagebox.showerror("Valor no válido", "Favor de ingresar una matricula válida en el campo 'Matricula'.")
             print(e)
             ventana.focus()
 
@@ -604,17 +603,6 @@ def ventanaVehiculos(app: App):
                     print(e)
     
     def buttonNuevo_clicked():
-        btn_nuevo.config(state="disabled")
-
-        max = app.dbc.maxSQL("cliente_id", "clientes")[0]
-        if max == None:
-            newID = 1
-        else:
-            newID = max + 1
-
-        entry_id.config(state="normal")
-        entry_id.insert(0, newID)
-        entry_id.config(state="disabled")
         btn_guardar.config(state="normal")
         
     def buttonEditar_clicked():

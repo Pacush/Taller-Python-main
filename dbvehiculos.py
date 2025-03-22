@@ -1,5 +1,5 @@
-import vehiculo as veh
 import conexion as con
+import vehiculo as veh
 
 
 class dbvehiculos:
@@ -31,17 +31,17 @@ class dbvehiculos:
         self.con = con.conexion()
         self.conn = self.con.open()
         self.cursor1 = self.conn.cursor()
-        self.sql = "select * from clientes where cliente_id={}".format(veh.getID())
+        self.sql = f"select * from vehiculos where matricula='{veh.getMatricula()}'"
         self.cursor1.execute(self.sql)
         aux = None
         row = self.cursor1.fetchone()
         if row is not None:
             aux = veh
-            aux.setID(int(row[0]))
-            aux.setUsuarioID(int(row[1]))
-            aux.setNombre(row[2])
-            aux.setRfc(row[3])
-            aux.setTelefono(row[4])
+            aux.setMatricula(row[0])
+            aux.setClienteID(int(row[1]))
+            aux.setMarca(row[2])
+            aux.setModelo(row[3])
+            aux.setUsuarioID(int(row[4]))
         return aux
     
     def editarVehiculos(self, veh: veh.Vehiculo):

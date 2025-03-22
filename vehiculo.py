@@ -6,11 +6,11 @@ class Vehiculo:
         self.modelo=""
         self.usuario_id=0
 
-    def setMatricula(self, Matricula):
-        self.Matricula=Matricula
+    def setMatricula(self, matricula):
+        self.matricula=matricula
 
     def getMatricula(self):
-        return self.id
+        return self.matricula
     
     def setClienteID(self, cliente_id):
         self.cliente_id=cliente_id

@@ -53,6 +53,7 @@ class dbclientes:
             valores = (cli.getNombre(), cli.getRfc(), cli.getTelefono(), cli.getID())
             self.cursor1.execute(self.sql, valores)
             self.conn.commit()
+            self.con.close()
             return True
         except Exception as e:
             print(e)

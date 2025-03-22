@@ -3,16 +3,16 @@ import vehiculo as veh
 
 
 class dbvehiculos:
-    def guardarVehiculos(self, veh: veh.Vehiculo):
+    def guardarVehiculo(self, veh: veh.Vehiculo):
         self.con = con.conexion()
         self.conn = self.con.open()
         self.cursor1 = self.conn.cursor()
-        self.sql = "insert into clientes (cliente_id, usuario_id, nombre, rfc, telefono) values (%s, %s, %s, %s, %s)"
-        self.datos=(veh.getID(),
-                    veh.getUsuarioID(),
-                    veh.getNombre(),
-                    veh.getRfc(),
-                    veh.getTelefono())
+        self.sql = "INSERT INTO vehiculos (matricula, cliente_id, marca, modelo, usuario_id) VALUES (%s, %s, %s, %s, %s)"
+        self.datos=(veh.getMatricula(),
+                    veh.getClienteID(),
+                    veh.getMarca(),
+                    veh.getModelo(),
+                    veh.getUsuarioID())
         self.cursor1.execute(self.sql, self.datos)
         self.conn.commit()
         self.conn.close()
@@ -44,13 +44,31 @@ class dbvehiculos:
             aux.setUsuarioID(int(row[4]))
         return aux
     
-    def editarVehiculos(self, veh: veh.Vehiculo):
+    def editarVehiculos(self, veh: veh.Vehiculo, matriculaOriginal: str):
         try:
             self.con = con.conexion()
             self.conn = self.con.open()
             self.cursor1 = self.conn.cursor()
-            self.sql = "UPDATE clientes SET nombre = %s, rfc = %s, telefono = %s WHERE cliente_id = %s"
-            valores = (veh.getNombre(), veh.getRfc(), veh.getTelefono(), veh.getID())
+            self.sql = "UPDATE vehiculos SET matricula = %s, cliente_id = %s, marca = %s, modelo = %s WHERE matricula = %s"
+            print(matriculaOriginal)
+            print([veh.getMatricula(), veh.getClienteID(), veh.getMarca(), veh.getModelo(), veh.getUsuarioID()])
+            valores = (veh.getMatricula(), veh.getClienteID(), veh.getMarca(), veh.getModelo(), matriculaOriginal)
+            
+            self.cursor1.execute(self.sql, valores)
+            self.conn.commit()
+            self.con.close()
+            return True
+        except Exception as e:
+            print(e)
+            return False
+        
+    def eliminarVehiculo(self, matricula: str):
+        try:
+            self.con = con.conexion()
+            self.conn = self.con.open()
+            self.cursor1 = self.conn.cursor()
+            self.sql = "DELETE FROM vehiculos WHERE matricula = %s"
+            valores = (matricula,)
             self.cursor1.execute(self.sql, valores)
             self.conn.commit()
             return True

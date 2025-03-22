@@ -334,7 +334,7 @@ def ventanaClientes(app: App):
     btn_guardar = tk.Button(frame_botones, text="Guardar", state="disabled", command=lambda: buttonGuardar_clicked())
     btn_cancelar = tk.Button(frame_botones, text="Cancelar", state="disabled", command=lambda: buttonCancelar_clicked())
     btn_editar = tk.Button(frame_botones, text="Editar", state="disabled", command=lambda: buttonEditar_clicked())
-    btn_remover = tk.Button(frame_botones, text="Remover", state="disabled", command=lambda: ventanaEliminarUsuario())
+    btn_remover = tk.Button(frame_botones, text="Remover", state="disabled", command=lambda: ventanaEliminarCliente())
     
     btn_nuevo.pack(side="left", padx=5)
     btn_guardar.pack(side="left", padx=5)
@@ -462,7 +462,7 @@ def ventanaClientes(app: App):
         btn_editar.config(state="disabled")
         btn_remover.config(state="disabled")
         
-    def ventanaEliminarUsuario():
+    def ventanaEliminarCliente():
         auxCli = cli.Cliente()
         auxCli.setID(int(entry_id.get()))
         
@@ -495,9 +495,9 @@ def ventanaVehiculos(app: App):
     label_id_buscar = tk.Label(ventana, text="Ingrese matricula a buscar:", bg="black", fg="white")
     label_id_buscar.place(x=30, y=10)
     entry_id_buscar = tk.Entry(ventana, width=30)
-    entry_id_buscar.place(x=140, y=10)
+    entry_id_buscar.place(x=180, y=10)
     btn_id_buscar = tk.Button(ventana, text="Buscar", command=lambda: buttonBuscar_clicked(), width=10)
-    btn_id_buscar.place(x=330, y=10)
+    btn_id_buscar.place(x=370, y=10)
     
     label_matricula = tk.Label(ventana, text="Matricula:", bg="black", fg="white")
     label_matricula.place(x=30, y=50)
@@ -516,7 +516,7 @@ def ventanaVehiculos(app: App):
     
     label_modelo = tk.Label(ventana, text="Modelo:", bg="black", fg="white")
     label_modelo.place(x=30, y=140)
-    entry_modelo = tk.Entry(ventana, width=30, show="*")
+    entry_modelo = tk.Entry(ventana, width=30)
     entry_modelo.place(x=100, y=140)
     
     label_usuario_id = tk.Label(ventana, text="Usuario ID:", bg="black", fg="white")
@@ -533,13 +533,15 @@ def ventanaVehiculos(app: App):
     btn_guardar = tk.Button(frame_botones, text="Guardar", state="disabled", command=lambda: buttonGuardar_clicked())
     btn_cancelar = tk.Button(frame_botones, text="Cancelar", state="disabled", command=lambda: buttonCancelar_clicked())
     btn_editar = tk.Button(frame_botones, text="Editar", state="disabled", command=lambda: buttonEditar_clicked())
-    btn_remover = tk.Button(frame_botones, text="Remover", state="disabled", command=lambda: ventanaEliminarUsuario())
+    btn_remover = tk.Button(frame_botones, text="Remover", state="disabled", command=lambda: ventanaEliminarVehiculo())
     
     btn_nuevo.pack(side="left", padx=5)
     btn_guardar.pack(side="left", padx=5)
     btn_cancelar.pack(side="left", padx=5)
     btn_editar.pack(side="left", padx=5)
     btn_remover.pack(side="left", padx=5)
+    
+    vehSearched = tk.StringVar()
 
     def buttonBuscar_clicked():
         try:
@@ -551,6 +553,7 @@ def ventanaVehiculos(app: App):
                 cliNombre = cliNombres[cliIDs.index(idCliente)]
                 entry_matricula.delete(0, END)
                 entry_matricula.insert(0, auxVeh.getMatricula())
+                vehSearched.set(auxVeh.getMatricula())
                 combo_cliente.delete(0, END)
                 combo_cliente.insert(0, cliNombre)
                 entry_marca.delete(0, END)
@@ -569,58 +572,74 @@ def ventanaVehiculos(app: App):
             ventana.focus()
 
     def buttonGuardar_clicked():
-            if entry_nombre.get() == "" or entry_id.get() == "" or entry_rfc.get() == "" or entry_telefono.get() == "":
-                messagebox.showerror("Campos faltantes", "Faltan campos por llenar para guardar el registro.")
-                ventana.focus()
+        
+        veh_ = veh.Vehiculo()
+        veh_.setMatricula(entry_matricula.get())
+        
+        auxVeh = app.dbv.buscarVehiculos(veh_)
+        
+        if entry_matricula.get() == "" or combo_cliente.get() == "" or entry_marca.get() == "" or entry_modelo.get() == "":
+            messagebox.showerror("Campos faltantes", "Faltan campos por llenar para guardar el registro.")
+            ventana.focus()
             
-            else:
-                auxCliente= cli.Cliente()
-                newID = int(entry_id.get())
-                if not newID:
-                    auxCliente.setID(1)
-                else:
-                    auxCliente.setID(newID)
-                    auxCliente.setNombre(entry_nombre.get())
-                    auxCliente.setRfc(entry_rfc.get())
-                    auxCliente.setTelefono(entry_telefono.get())
-                    auxCliente.setUsuarioID(app.userLogged.getID())
-                try:
-                    app.dbc.guardarCliente(auxCliente)
-                    messagebox.showinfo("Registro exitoso", f"Se ha guardado correctamente al cliente con el ID {auxCliente.getID()}. Se registra bajo el username {app.userLogged.getUsername()}", )
-                    ventana.focus()
-                    
-                    entry_id.config(state="normal")
-                    entry_id.delete(0, END)
-                    entry_id.config(state="disabled")
-                    entry_nombre.delete(0, END)
-                    entry_rfc.delete(0, END)
-                    entry_telefono.delete(0, END)
-                    btn_guardar.config(state="disabled")
-                    btn_nuevo.config(state="normal")
-                    
-                except Exception as e:
-                    messagebox.showerror("Error", "Hubo un error al intentar ingresar el registro. Revisa tus datos.")
-                    print(e)
+        elif not (combo_cliente.get() in cliNombres):
+            messagebox.showerror("Valores inválidos", "Favor de ingresar valores adecuados.")
+            ventana.focus()
+            
+        elif entry_matricula.get() == auxVeh.getMatricula():
+            messagebox.showerror("Matrícula repetida", "La matrícula ingresada ya está ingresada en los registros.")
+            ventana.focus()
+        
+        else:
+            cliID = cliIDs[cliNombres.index(combo_cliente.get())]
+            auxVehiculo= veh.Vehiculo()
+            auxVehiculo.setMatricula(entry_matricula.get())
+            auxVehiculo.setClienteID(cliID)
+            auxVehiculo.setMarca(entry_marca.get())
+            auxVehiculo.setModelo(entry_modelo.get())
+            auxVehiculo.setUsuarioID(app.userLogged.getID())
+            try:
+                app.dbv.guardarVehiculo(auxVehiculo)
+                messagebox.showinfo("Registro exitoso", f"Se ha guardado correctamente al vehiculo con la matricula {auxVehiculo.getMatricula()}. Se registra bajo el username {app.userLogged.getUsername()}", )
+                ventana.focus()
+                
+                entry_matricula.delete(0, END)
+                combo_cliente.delete(0, END)
+                entry_marca.delete(0, END)
+                entry_modelo.delete(0, END)
+                btn_guardar.config(state="disabled")
+                btn_nuevo.config(state="normal")
+                
+            except Exception as e:
+                messagebox.showerror("Error", "Hubo un error al intentar ingresar el registro. Revisa tus datos.")
+                print(e)
     
     def buttonNuevo_clicked():
+        
         btn_guardar.config(state="normal")
         
     def buttonEditar_clicked():
         try:
-            if entry_nombre.get() == "" or entry_id.get() == "" or entry_rfc.get() == "" or entry_telefono.get() == "":
-                messagebox.showerror("Campos faltantes", "Faltan campos por llenar para editar el registro.")
+            if entry_matricula.get() == "" or combo_cliente.get() == "" or entry_marca.get() == "" or entry_modelo.get() == "":
+                messagebox.showerror("Campos faltantes", "Faltan campos por llenar para guardar el registro.")
+                ventana.focus()
+                
+            elif not (combo_cliente.get() in cliNombres):
+                messagebox.showerror("Valores inválidos", "Favor de ingresar valores adecuados.")
                 ventana.focus()
 
             else:
-                auxCli = cli.Cliente()
-                auxCli.setID(int(entry_id.get()))
-                auxCli.setNombre(entry_nombre.get())
-                auxCli.setRfc(entry_rfc.get())
-                auxCli.setTelefono(entry_telefono.get())
-                auxCli.setUsuarioID(app.userLogged.getID())
-                edicion = app.dbc.editarCliente(auxCli)
+                cliID = cliIDs[cliNombres.index(combo_cliente.get())]
+                auxVehiculo = veh.Vehiculo()
+                auxVehiculo.setMatricula(entry_matricula.get())
+                auxVehiculo.setClienteID(cliID)
+                auxVehiculo.setMarca(entry_marca.get())
+                auxVehiculo.setModelo(entry_modelo.get())
+                auxVehiculo.setUsuarioID(app.userLogged.getID())
+                print([auxVehiculo.getMatricula(), auxVehiculo.getClienteID(), auxVehiculo.getMarca(), auxVehiculo.getModelo(), auxVehiculo.getUsuarioID()])
+                edicion = app.dbv.editarVehiculos(auxVehiculo, vehSearched.get())
                 if edicion:
-                    messagebox.showinfo("Edición exitosa", "Se han editado correctamente los datos del cliente.")
+                    messagebox.showinfo("Edición exitosa", "Se han editado correctamente los datos del vehiculo.")
                     buttonCancelar_clicked()
                     ventana.focus()
                     
@@ -634,31 +653,29 @@ def ventanaVehiculos(app: App):
             print(e)
 
     def buttonCancelar_clicked():
-        entry_id.config(state="normal")
-        entry_id.delete(0, END)
-        entry_id.config(state="disabled")
+        entry_matricula.delete(0, END)
         entry_id_buscar.delete(0, END)
-        entry_nombre.delete(0, END)
-        entry_rfc.delete(0, END)
-        entry_telefono.delete(0, END)
+        combo_cliente.delete(0, END)
+        entry_marca.delete(0, END)
+        entry_modelo.delete(0, END)
         btn_nuevo.config(state="normal")
         btn_cancelar.config(state="disabled")
         btn_editar.config(state="disabled")
         btn_remover.config(state="disabled")
         
-    def ventanaEliminarUsuario():
-        auxCli = cli.Cliente()
-        auxCli.setID(int(entry_id.get()))
+    def ventanaEliminarVehiculo():
+        auxVeh = veh.Vehiculo()
+        auxVeh.setMatricula(entry_matricula.get())
         
-        confirmation = messagebox.askyesno("¿Desea continuar?", f"¿Desea eliminar al cliente con ID {auxCli.getID()}?")
+        confirmation = messagebox.askyesno("¿Desea continuar?", f"¿Desea eliminar al vehículo con matricula {auxVeh.getMatricula()}?")
         if confirmation:
-            if app.dbc.eliminarCliente(auxCli.getID()):
-                messagebox.showinfo("Eliminación exitosa", f"Se ha eliminado satisfactoriamente al cliente con ID {auxCli.getID()}.")
+            if app.dbv.eliminarVehiculo(auxVeh.getMatricula()):
+                messagebox.showinfo("Eliminación exitosa", f"Se ha eliminado satisfactoriamente al vehículo con matricula {auxVeh.getMatricula()}.")
                 buttonCancelar_clicked()
                 ventana.focus()
                 
             else:
-                messagebox.showerror("Eliminación fallida", "No ha sido posible elimiar al cliente.")
+                messagebox.showerror("Eliminación fallida", "No ha sido posible elimiar al vehículo.")
                 ventana.focus()
                 
         else:

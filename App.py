@@ -1,13 +1,14 @@
 import tkinter as tk
 from tkinter import END, Toplevel, messagebox, ttk
 
-import dbusuarios as dbu
-import dbclientes as dbc
-
-import usuario as usr
 import cliente as cli
+import vehiculo as veh
+import dbclientes as dbc
+import dbusuarios as dbu
+import dbvehiculos as dbv
+import usuario as usr
 
-
+perfiles = ["Administrador", "Auxiliar", "Mecanico"]
 
 class Login(tk.Tk):
     def __init__(self):
@@ -51,8 +52,6 @@ class Login(tk.Tk):
             else:
                 messagebox.showerror("Error", "Hubo un error al intentar ingresar. Revisa tus datos.")
 
-        
-
 
 class App(tk.Tk):
 
@@ -74,7 +73,7 @@ class App(tk.Tk):
         self.menu_archivo.add_separator()
         self.menu_archivo.add_command(label="Clientes", command=lambda: ventanaClientes(self))
         self.menu_archivo.add_separator()
-        self.menu_archivo.add_command(label="Vehiculos", command=lambda: print("Vehiculos"))
+        self.menu_archivo.add_command(label="Vehiculos", command=lambda: ventanaVehiculos(self))
         self.menu_archivo.add_separator()
         self.menu_archivo.add_command(label="Reparaciones", command=lambda: print("Reparaciones"))
         self.menu_archivo.add_separator()
@@ -88,6 +87,7 @@ class App(tk.Tk):
         
         self.dbu = dbu.dbusuarios()
         self.dbc = dbc.dbclientes()
+        self.dbv = dbv.dbvehiculos()
 
         self.userLogged = userLogged
 
@@ -286,7 +286,7 @@ def ventanaUsuarios(app: App):
                 
         else:
             ventana.focus()
-            
+
 
 def ventanaClientes(app: App):
     ventana = tk.Toplevel()
@@ -297,7 +297,7 @@ def ventanaClientes(app: App):
     label_id_buscar.place(x=30, y=10)
     entry_id_buscar = tk.Entry(ventana, width=30)
     entry_id_buscar.place(x=140, y=10)
-    btn_id_buscar = tk.Button(ventana, text="Buscar", command=lambda: print(), width=10)
+    btn_id_buscar = tk.Button(ventana, text="Buscar", command=lambda: buttonBuscar_clicked(), width=10)
     btn_id_buscar.place(x=330, y=10)
     
     label_id = tk.Label(ventana, text="ID:", bg="black", fg="white")
@@ -320,20 +320,58 @@ def ventanaClientes(app: App):
     entry_telefono = tk.Entry(ventana, width=30, show="*")
     entry_telefono.place(x=100, y=140)
     
+    label_usuario_id = tk.Label(ventana, text="Usuario ID:", bg="black", fg="white")
+    label_usuario_id.place(x=30, y=170)
+    entry_usuario_id = tk.Entry(ventana, width=30)
+    entry_usuario_id.place(x=100, y=170)
+    entry_usuario_id.insert(0, app.userLogged.getID())
+    entry_usuario_id.config(state="disabled")
+    
     frame_botones = tk.Frame(ventana, bg="black")
     frame_botones.place(x=30, y=210)
     
     btn_nuevo = tk.Button(frame_botones, text="Nuevo", state="normal", command=lambda: buttonNuevo_clicked())
     btn_guardar = tk.Button(frame_botones, text="Guardar", state="disabled", command=lambda: buttonGuardar_clicked())
     btn_cancelar = tk.Button(frame_botones, text="Cancelar", state="disabled", command=lambda: buttonCancelar_clicked())
-    btn_editar = tk.Button(frame_botones, text="Editar", state="disabled", command=lambda: print())
-    btn_remover = tk.Button(frame_botones, text="Remover", state="disabled", command=lambda: print())
+    btn_editar = tk.Button(frame_botones, text="Editar", state="disabled", command=lambda: buttonEditar_clicked())
+    btn_remover = tk.Button(frame_botones, text="Remover", state="disabled", command=lambda: ventanaEliminarUsuario())
     
     btn_nuevo.pack(side="left", padx=5)
     btn_guardar.pack(side="left", padx=5)
     btn_cancelar.pack(side="left", padx=5)
     btn_editar.pack(side="left", padx=5)
     btn_remover.pack(side="left", padx=5)
+
+    def buttonBuscar_clicked():
+        try:
+            cli_ = cli.Cliente()
+            cli_.setID(int(entry_id_buscar.get()))
+            auxCli = app.dbc.buscarCliente(cli_)
+            
+            if auxCli:
+                entry_id.config(state="normal")
+                entry_id.delete(0, END)
+                entry_id.insert(0, auxCli.getID())
+                entry_id.config(state="disabled")
+                entry_nombre.delete(0, END)
+                entry_nombre.insert(0, auxCli.getNombre())
+                entry_rfc.delete(0, END)
+                entry_rfc.insert(0, auxCli.getRfc())
+                entry_telefono.delete(0, END)
+                entry_telefono.insert(0, auxCli.getTelefono())
+                btn_cancelar.config(state="normal")
+                btn_editar.config(state="normal")
+                btn_remover.config(state="normal")
+                
+                
+            else:
+                messagebox.showerror("Cliente no encontrado", "El cliente no se encuentra registrado en la DB.")
+                ventana.focus()
+            
+        except Exception as e:
+            messagebox.showerror("Valor no válido", "Favor de ingresar un número entero en el campo 'ID'.")
+            print(e)
+            ventana.focus()
 
     def buttonGuardar_clicked():
             if entry_nombre.get() == "" or entry_id.get() == "" or entry_rfc.get() == "" or entry_telefono.get() == "":
@@ -382,6 +420,34 @@ def ventanaClientes(app: App):
         entry_id.insert(0, newID)
         entry_id.config(state="disabled")
         btn_guardar.config(state="normal")
+        
+    def buttonEditar_clicked():
+        try:
+            if entry_nombre.get() == "" or entry_id.get() == "" or entry_rfc.get() == "" or entry_telefono.get() == "":
+                messagebox.showerror("Campos faltantes", "Faltan campos por llenar para editar el registro.")
+                ventana.focus()
+
+            else:
+                auxCli = cli.Cliente()
+                auxCli.setID(int(entry_id.get()))
+                auxCli.setNombre(entry_nombre.get())
+                auxCli.setRfc(entry_rfc.get())
+                auxCli.setTelefono(entry_telefono.get())
+                auxCli.setUsuarioID(app.userLogged.getID())
+                edicion = app.dbc.editarCliente(auxCli)
+                if edicion:
+                    messagebox.showinfo("Edición exitosa", "Se han editado correctamente los datos del cliente.")
+                    buttonCancelar_clicked()
+                    ventana.focus()
+                    
+                else:
+                    messagebox.showerror("Edición fallida", "No ha sido posible editar los datos del cliente.")
+                    ventana.focus()
+                
+        except Exception as e:
+            messagebox.showerror("Valores inválidos", "Favor de ingresar valores adecuados.")
+            ventana.focus()
+            print(e)
 
     def buttonCancelar_clicked():
         entry_id.config(state="normal")
@@ -390,14 +456,226 @@ def ventanaClientes(app: App):
         entry_id_buscar.delete(0, END)
         entry_nombre.delete(0, END)
         entry_rfc.delete(0, END)
-        entry_rfc.delete(0, END)
+        entry_telefono.delete(0, END)
         btn_nuevo.config(state="normal")
         btn_cancelar.config(state="disabled")
         btn_editar.config(state="disabled")
         btn_remover.config(state="disabled")
+        
+    def ventanaEliminarUsuario():
+        auxCli = cli.Cliente()
+        auxCli.setID(int(entry_id.get()))
+        
+        confirmation = messagebox.askyesno("¿Desea continuar?", f"¿Desea eliminar al cliente con ID {auxCli.getID()}?")
+        if confirmation:
+            if app.dbc.eliminarCliente(auxCli.getID()):
+                messagebox.showinfo("Eliminación exitosa", f"Se ha eliminado satisfactoriamente al cliente con ID {auxCli.getID()}.")
+                buttonCancelar_clicked()
+                ventana.focus()
+                
+            else:
+                messagebox.showerror("Eliminación fallida", "No ha sido posible elimiar al cliente.")
+                ventana.focus()
+                
+        else:
+            ventana.focus()
 
+def ventanaVehiculos(app: App):
+    ventana = tk.Toplevel()
+    ventana.config(width=500, height=500, bg="black")
+    ventana.title("Vehiculos")
+    
+    cliNombresID = app.dbc.dictClientesId()
+    cliNombres = []
+    cliIDs = []
+    for cliente in cliNombresID:
+        cliIDs.append(int(cliente[0]))
+        cliNombres.append(cliente[1])
+    
+    label_id_buscar = tk.Label(ventana, text="Ingrese ID a buscar:", bg="black", fg="white")
+    label_id_buscar.place(x=30, y=10)
+    entry_id_buscar = tk.Entry(ventana, width=30)
+    entry_id_buscar.place(x=140, y=10)
+    btn_id_buscar = tk.Button(ventana, text="Buscar", command=lambda: buttonBuscar_clicked(), width=10)
+    btn_id_buscar.place(x=330, y=10)
+    
+    label_matricula = tk.Label(ventana, text="Matricula:", bg="black", fg="white")
+    label_matricula.place(x=30, y=50)
+    entry_matricula = tk.Entry(ventana)
+    entry_matricula.place(x=100, y=50)
+    
+    label_nombre = tk.Label(ventana, text="Cliente:", bg="black", fg="white")
+    label_nombre.place(x=30, y=80)
+    combo_cliente = ttk.Combobox(ventana, values=cliNombres, width=30)
+    combo_cliente.place(x=100, y=80)
+    
+    label_marca = tk.Label(ventana, text="Marca:", bg="black", fg="white")
+    label_marca.place(x=30, y=110)
+    entry_marca = tk.Entry(ventana, width=50)
+    entry_marca.place(x=100, y=110)
+    
+    label_modelo = tk.Label(ventana, text="Modelo:", bg="black", fg="white")
+    label_modelo.place(x=30, y=140)
+    entry_modelo = tk.Entry(ventana, width=30, show="*")
+    entry_modelo.place(x=100, y=140)
+    
+    label_usuario_id = tk.Label(ventana, text="Usuario ID:", bg="black", fg="white")
+    label_usuario_id.place(x=30, y=170)
+    entry_usuario_id = tk.Entry(ventana, width=30)
+    entry_usuario_id.place(x=100, y=170)
+    entry_usuario_id.insert(0, app.userLogged.getID())
+    entry_usuario_id.config(state="disabled")
+    
+    frame_botones = tk.Frame(ventana, bg="black")
+    frame_botones.place(x=30, y=210)
+    
+    btn_nuevo = tk.Button(frame_botones, text="Nuevo", state="normal", command=lambda: buttonNuevo_clicked())
+    btn_guardar = tk.Button(frame_botones, text="Guardar", state="disabled", command=lambda: buttonGuardar_clicked())
+    btn_cancelar = tk.Button(frame_botones, text="Cancelar", state="disabled", command=lambda: buttonCancelar_clicked())
+    btn_editar = tk.Button(frame_botones, text="Editar", state="disabled", command=lambda: buttonEditar_clicked())
+    btn_remover = tk.Button(frame_botones, text="Remover", state="disabled", command=lambda: ventanaEliminarUsuario())
+    
+    btn_nuevo.pack(side="left", padx=5)
+    btn_guardar.pack(side="left", padx=5)
+    btn_cancelar.pack(side="left", padx=5)
+    btn_editar.pack(side="left", padx=5)
+    btn_remover.pack(side="left", padx=5)
 
-perfiles = ["Administrador", "Auxiliar", "Mecanico"]
+    def buttonBuscar_clicked():
+        try:
+            veh_ = veh.Vehiculo()
+            veh_.setID(int(entry_id_buscar.get()))
+            auxCli = app.dbc.buscarCliente(cli_)
+            
+            if auxCli:
+                entry_matricula.insert(0, auxCli.getID())
+                entry_nombre.delete(0, END)
+                entry_nombre.insert(0, auxCli.getNombre())
+                entry_rfc.delete(0, END)
+                entry_rfc.insert(0, auxCli.getRfc())
+                entry_telefono.delete(0, END)
+                entry_telefono.insert(0, auxCli.getTelefono())
+                btn_cancelar.config(state="normal")
+                btn_editar.config(state="normal")
+                btn_remover.config(state="normal")
+                
+                
+            else:
+                messagebox.showerror("Cliente no encontrado", "El cliente no se encuentra registrado en la DB.")
+                ventana.focus()
+            
+        except Exception as e:
+            messagebox.showerror("Valor no válido", "Favor de ingresar un número entero en el campo 'ID'.")
+            print(e)
+            ventana.focus()
+
+    def buttonGuardar_clicked():
+            if entry_nombre.get() == "" or entry_id.get() == "" or entry_rfc.get() == "" or entry_telefono.get() == "":
+                messagebox.showerror("Campos faltantes", "Faltan campos por llenar para guardar el registro.")
+                ventana.focus()
+            
+            else:
+                auxCliente= cli.Cliente()
+                newID = int(entry_id.get())
+                if not newID:
+                    auxCliente.setID(1)
+                else:
+                    auxCliente.setID(newID)
+                    auxCliente.setNombre(entry_nombre.get())
+                    auxCliente.setRfc(entry_rfc.get())
+                    auxCliente.setTelefono(entry_telefono.get())
+                    auxCliente.setUsuarioID(app.userLogged.getID())
+                try:
+                    app.dbc.guardarCliente(auxCliente)
+                    messagebox.showinfo("Registro exitoso", f"Se ha guardado correctamente al cliente con el ID {auxCliente.getID()}. Se registra bajo el username {app.userLogged.getUsername()}", )
+                    ventana.focus()
+                    
+                    entry_id.config(state="normal")
+                    entry_id.delete(0, END)
+                    entry_id.config(state="disabled")
+                    entry_nombre.delete(0, END)
+                    entry_rfc.delete(0, END)
+                    entry_telefono.delete(0, END)
+                    btn_guardar.config(state="disabled")
+                    btn_nuevo.config(state="normal")
+                    
+                except Exception as e:
+                    messagebox.showerror("Error", "Hubo un error al intentar ingresar el registro. Revisa tus datos.")
+                    print(e)
+    
+    def buttonNuevo_clicked():
+        btn_nuevo.config(state="disabled")
+
+        max = app.dbc.maxSQL("cliente_id", "clientes")[0]
+        if max == None:
+            newID = 1
+        else:
+            newID = max + 1
+
+        entry_id.config(state="normal")
+        entry_id.insert(0, newID)
+        entry_id.config(state="disabled")
+        btn_guardar.config(state="normal")
+        
+    def buttonEditar_clicked():
+        try:
+            if entry_nombre.get() == "" or entry_id.get() == "" or entry_rfc.get() == "" or entry_telefono.get() == "":
+                messagebox.showerror("Campos faltantes", "Faltan campos por llenar para editar el registro.")
+                ventana.focus()
+
+            else:
+                auxCli = cli.Cliente()
+                auxCli.setID(int(entry_id.get()))
+                auxCli.setNombre(entry_nombre.get())
+                auxCli.setRfc(entry_rfc.get())
+                auxCli.setTelefono(entry_telefono.get())
+                auxCli.setUsuarioID(app.userLogged.getID())
+                edicion = app.dbc.editarCliente(auxCli)
+                if edicion:
+                    messagebox.showinfo("Edición exitosa", "Se han editado correctamente los datos del cliente.")
+                    buttonCancelar_clicked()
+                    ventana.focus()
+                    
+                else:
+                    messagebox.showerror("Edición fallida", "No ha sido posible editar los datos del cliente.")
+                    ventana.focus()
+                
+        except Exception as e:
+            messagebox.showerror("Valores inválidos", "Favor de ingresar valores adecuados.")
+            ventana.focus()
+            print(e)
+
+    def buttonCancelar_clicked():
+        entry_id.config(state="normal")
+        entry_id.delete(0, END)
+        entry_id.config(state="disabled")
+        entry_id_buscar.delete(0, END)
+        entry_nombre.delete(0, END)
+        entry_rfc.delete(0, END)
+        entry_telefono.delete(0, END)
+        btn_nuevo.config(state="normal")
+        btn_cancelar.config(state="disabled")
+        btn_editar.config(state="disabled")
+        btn_remover.config(state="disabled")
+        
+    def ventanaEliminarUsuario():
+        auxCli = cli.Cliente()
+        auxCli.setID(int(entry_id.get()))
+        
+        confirmation = messagebox.askyesno("¿Desea continuar?", f"¿Desea eliminar al cliente con ID {auxCli.getID()}?")
+        if confirmation:
+            if app.dbc.eliminarCliente(auxCli.getID()):
+                messagebox.showinfo("Eliminación exitosa", f"Se ha eliminado satisfactoriamente al cliente con ID {auxCli.getID()}.")
+                buttonCancelar_clicked()
+                ventana.focus()
+                
+            else:
+                messagebox.showerror("Eliminación fallida", "No ha sido posible elimiar al cliente.")
+                ventana.focus()
+                
+        else:
+            ventana.focus()
+
 
 
 login=Login()

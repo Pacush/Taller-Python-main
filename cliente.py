@@ -1,9 +1,7 @@
-import conexion as con
-
 class Cliente:
     def __init__(self):
         self.id=0
-        self.usuario_id=""
+        self.usuario_id=0
         self.nombre=""
         self.rfc=""
         self.telefono=""

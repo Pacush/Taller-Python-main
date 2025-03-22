@@ -1,6 +1,7 @@
 import conexion as con
 import usuario as usr
 
+
 class dbusuarios:
     def autentificar(self, usuario: usr.Usuario):
         try:

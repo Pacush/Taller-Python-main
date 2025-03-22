@@ -1,18 +1,18 @@
-import cliente as cli
+import vehiculo as veh
 import conexion as con
 
 
-class dbclientes:
-    def guardarCliente(self, cli: cli.Cliente):
+class dbvehiculos:
+    def guardarVehiculos(self, veh: veh.Vehiculo):
         self.con = con.conexion()
         self.conn = self.con.open()
         self.cursor1 = self.conn.cursor()
         self.sql = "insert into clientes (cliente_id, usuario_id, nombre, rfc, telefono) values (%s, %s, %s, %s, %s)"
-        self.datos=(cli.getID(),
-                    cli.getUsuarioID(),
-                    cli.getNombre(),
-                    cli.getRfc(),
-                    cli.getTelefono())
+        self.datos=(veh.getID(),
+                    veh.getUsuarioID(),
+                    veh.getNombre(),
+                    veh.getRfc(),
+                    veh.getTelefono())
         self.cursor1.execute(self.sql, self.datos)
         self.conn.commit()
         self.conn.close()
@@ -27,16 +27,16 @@ class dbclientes:
         self.con.close()
         return row
     
-    def buscarCliente(self, cli: cli.Cliente):
+    def buscarVehiculos(self, veh: veh.Vehiculo):
         self.con = con.conexion()
         self.conn = self.con.open()
         self.cursor1 = self.conn.cursor()
-        self.sql = "select * from clientes where cliente_id={}".format(cli.getID())
+        self.sql = "select * from clientes where cliente_id={}".format(veh.getID())
         self.cursor1.execute(self.sql)
         aux = None
         row = self.cursor1.fetchone()
         if row is not None:
-            aux = cli
+            aux = veh
             aux.setID(int(row[0]))
             aux.setUsuarioID(int(row[1]))
             aux.setNombre(row[2])
@@ -44,44 +44,16 @@ class dbclientes:
             aux.setTelefono(row[4])
         return aux
     
-    def editarCliente(self, cli: cli.Cliente):
+    def editarVehiculos(self, veh: veh.Vehiculo):
         try:
             self.con = con.conexion()
             self.conn = self.con.open()
             self.cursor1 = self.conn.cursor()
             self.sql = "UPDATE clientes SET nombre = %s, rfc = %s, telefono = %s WHERE cliente_id = %s"
-            valores = (cli.getNombre(), cli.getRfc(), cli.getTelefono(), cli.getID())
+            valores = (veh.getNombre(), veh.getRfc(), veh.getTelefono(), veh.getID())
             self.cursor1.execute(self.sql, valores)
             self.conn.commit()
             return True
-        except Exception as e:
-            print(e)
-            return False
-        
-    def eliminarCliente(self, id: int):
-        try:
-            self.con = con.conexion()
-            self.conn = self.con.open()
-            self.cursor1 = self.conn.cursor()
-            self.sql = "DELETE FROM clientes WHERE cliente_id = %s"
-            valores = (id,)
-            self.cursor1.execute(self.sql, valores)
-            self.conn.commit()
-            return True
-        except Exception as e:
-            print(e)
-            return False
-        
-    def dictClientesId(self):
-        try:
-            self.con = con.conexion()
-            self.conn = self.con.open()
-            self.cursor1 = self.conn.cursor()
-            self.sql = "SELECT cliente_id, nombre FROM clientes"
-            valores = (id,)
-            self.cursor1.execute(self.sql)
-            rows = self.cursor1.fetchall()
-            return rows
         except Exception as e:
             print(e)
             return False

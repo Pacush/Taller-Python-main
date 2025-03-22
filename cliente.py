@@ -1,5 +1,4 @@
 import conexion as con
-import dbclientes
 
 class Cliente:
     def __init__(self):

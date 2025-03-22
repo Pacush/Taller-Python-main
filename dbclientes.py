@@ -27,12 +27,17 @@ class dbclientes:
         self.con.close()
         return row
     
-    def buscarCliente(self, cli: cli.Cliente):
+    def buscarCliente(self, cli: cli.Cliente, usrLogged: list):
         self.con = con.conexion()
         self.conn = self.con.open()
         self.cursor1 = self.conn.cursor()
-        self.sql = "select * from clientes where cliente_id={}".format(cli.getID())
-        self.cursor1.execute(self.sql)
+        if usrLogged[1] == "Administrador":
+            self.sql = "select * from clientes where cliente_id=%s"
+            self.datos=(cli.getID(),)
+        else:
+            self.sql = "select * from clientes where cliente_id=%s AND usuario_id =%s"
+            self.datos=(cli.getID(), usrLogged[0])
+        self.cursor1.execute(self.sql, self.datos)
         aux = None
         row = self.cursor1.fetchone()
         if row is not None:
@@ -73,14 +78,18 @@ class dbclientes:
             print(e)
             return False
         
-    def dictClientesId(self, usrLoggedId):
+    def dictClientesId(self, usrLoggedId, isAdmin: bool = False):
         try:
             self.con = con.conexion()
             self.conn = self.con.open()
             self.cursor1 = self.conn.cursor()
-            self.sql = "SELECT cliente_id, nombre FROM clientes WHERE usuario_id = %s"
-            valores = (usrLoggedId,)
-            self.cursor1.execute(self.sql, valores)
+            if isAdmin:
+                self.sql = "SELECT cliente_id, nombre FROM clientes"
+                self.cursor1.execute(self.sql)
+            else:
+                self.sql = "SELECT cliente_id, nombre FROM clientes WHERE usuario_id = %s"
+                valores = (usrLoggedId,)
+                self.cursor1.execute(self.sql, valores)
             rows = self.cursor1.fetchall()
             return rows
         except Exception as e:

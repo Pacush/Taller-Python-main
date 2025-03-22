@@ -79,7 +79,7 @@ class App(tk.Tk):
         self.menu_archivo.add_separator()
         self.menu_archivo.add_command(label="Piezas", command=lambda: print("Piezas"))
         self.menu_archivo.add_separator()
-        self.menu_archivo.add_command(label="Salir", command=self.quit)
+        self.menu_archivo.add_command(label="Salir", command=lambda: salir())
         
         self.menu_bar.add_cascade(label="File", menu=self.menu_archivo)
         
@@ -88,6 +88,12 @@ class App(tk.Tk):
         self.dbu = dbu.dbusuarios()
         self.dbc = dbc.dbclientes()
         self.dbv = dbv.dbvehiculos()
+        
+        def salir():
+            self.destroy()
+            login = Login()
+            login.mainloop()
+            
 
         self.userLogged = userLogged
 
@@ -143,6 +149,8 @@ def ventanaUsuarios(app: App):
     btn_editar.pack(side="left", padx=5)
     btn_remover.pack(side="left", padx=5)
     
+    if app.userLogged.getPerfil() != "Administrador" or app.userLogged.getPerfil() != "Auxiliar": btn_nuevo.config(state="disabled")
+    
 
     def buttonGuardar_clicked():
             if entry_nombre.get() == "" or entry_username.get() == "" or entry_password.get() == "" or combo_perfil.get() == "":
@@ -175,8 +183,9 @@ def ventanaUsuarios(app: App):
                     entry_username.delete(0, END)
                     entry_password.delete(0, END)
                     combo_perfil.delete(0, END)
-                    btn_guardar.config(state="disabled")
-                    btn_nuevo.config(state="normal")
+                    
+                    if app.userLogged.getPerfil() == "Administrador" or app.userLogged.getPerfil() == "Auxiliar": btn_guardar.config(state="disabled")
+                    if app.userLogged.getPerfil() == "Administrador" or app.userLogged.getPerfil() == "Auxiliar": btn_nuevo.config(state="normal")
                     
                 except Exception as e:
                     messagebox.showerror("Error", "Hubo un error al intentar ingresar el registro. Revisa tus datos.")
@@ -204,8 +213,8 @@ def ventanaUsuarios(app: App):
                 combo_perfil.insert(0, auxUser.getPerfil())
                 
                 btn_cancelar.config(state="normal")
-                btn_editar.config(state="normal")
-                btn_remover.config(state="normal")
+                if app.userLogged.getPerfil() == "Administrador" or app.userLogged.getPerfil() == "Auxiliar": btn_editar.config(state="normal")
+                if app.userLogged.getPerfil() == "Administrador" or app.userLogged.getPerfil() == "Auxiliar": btn_remover.config(state="normal")
                 
                 
             else:
@@ -341,12 +350,19 @@ def ventanaClientes(app: App):
     btn_cancelar.pack(side="left", padx=5)
     btn_editar.pack(side="left", padx=5)
     btn_remover.pack(side="left", padx=5)
+    
+    if app.userLogged.getPerfil() == "Administrador" or app.userLogged.getPerfil() == "Auxiliar":
+        btn_nuevo.config(state="normal")
+    else:
+        btn_nuevo.config(state="disabled")
+    
 
     def buttonBuscar_clicked():
         try:
             cli_ = cli.Cliente()
             cli_.setID(int(entry_id_buscar.get()))
-            auxCli = app.dbc.buscarCliente(cli_)
+            auxCli = app.dbc.buscarCliente(cli_, [app.userLogged.getID(), app.userLogged.getPerfil()])
+            
             
             if auxCli:
                 entry_id.config(state="normal")
@@ -359,9 +375,11 @@ def ventanaClientes(app: App):
                 entry_rfc.insert(0, auxCli.getRfc())
                 entry_telefono.delete(0, END)
                 entry_telefono.insert(0, auxCli.getTelefono())
-                btn_cancelar.config(state="normal")
-                btn_editar.config(state="normal")
-                btn_remover.config(state="normal")
+                
+                if cli_.getUsuarioID() == app.userLogged.getID() or app.userLogged.getPerfil() == "Administrador" or app.userLogged.getPerfil() == "Auxiliar":
+                    btn_cancelar.config(state="normal")
+                    btn_editar.config(state="normal")
+                    btn_remover.config(state="normal")
                 
                 
             else:
@@ -457,7 +475,10 @@ def ventanaClientes(app: App):
         entry_nombre.delete(0, END)
         entry_rfc.delete(0, END)
         entry_telefono.delete(0, END)
-        btn_nuevo.config(state="normal")
+        if app.userLogged.getPerfil() == "Administrador" or app.userLogged.getPerfil() == "Auxiliar":
+            btn_nuevo.config(state="normal")
+        else:
+            btn_nuevo.config(state="disabled")
         btn_cancelar.config(state="disabled")
         btn_editar.config(state="disabled")
         btn_remover.config(state="disabled")
@@ -485,7 +506,8 @@ def ventanaVehiculos(app: App):
     ventana.config(width=500, height=500, bg="black")
     ventana.title("Vehiculos")
     
-    cliNombresID = app.dbc.dictClientesId(app.userLogged.getID())
+    isAdmin = app.userLogged.getPerfil() == "Administrador"
+    cliNombresID = app.dbc.dictClientesId(app.userLogged.getID(), isAdmin)
     cliNombres = []
     cliIDs = []
     for cliente in cliNombresID:
@@ -541,6 +563,11 @@ def ventanaVehiculos(app: App):
     btn_editar.pack(side="left", padx=5)
     btn_remover.pack(side="left", padx=5)
     
+    if app.userLogged.getPerfil() == "Administrador" or app.userLogged.getPerfil() == "Auxiliar":
+        btn_nuevo.config(state="normal")
+    else:
+        btn_nuevo.config(state="disabled")
+    
     vehSearched = tk.StringVar()
 
     def buttonBuscar_clicked():
@@ -586,7 +613,7 @@ def ventanaVehiculos(app: App):
             messagebox.showerror("Valores inválidos", "Favor de ingresar valores adecuados.")
             ventana.focus()
             
-        elif entry_matricula.get() == auxVeh.getMatricula():
+        elif auxVeh != None:
             messagebox.showerror("Matrícula repetida", "La matrícula ingresada ya está ingresada en los registros.")
             ventana.focus()
         

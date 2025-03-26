@@ -95,3 +95,14 @@ class dbclientes:
         except Exception as e:
             print(e)
             return False
+
+    def rfcsClientes(self):
+        try:
+            self.sql = "SELECT rfc nombre FROM clientes"
+            #valores = (usrLoggedId,)
+            self.cursor1.execute(self.sql)
+            rows = self.cursor1.fetchall()
+            return rows
+        except Exception as e:
+            print(e)
+            return []

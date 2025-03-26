@@ -1,5 +1,4 @@
 import conexion as con
-import dbusuarios
 
 
 class Usuario:

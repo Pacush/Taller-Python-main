@@ -75,3 +75,22 @@ class dbvehiculos:
         except Exception as e:
             print(e)
             return False
+        
+    def vehMatriculas(self, usrLoggedId, isAdmin: bool = False):
+        try:
+            self.con = con.conexion()
+            self.conn = self.con.open()
+            self.cursor1 = self.conn.cursor()
+            if isAdmin:
+                self.sql = "SELECT matricula FROM vehiculos"
+                self.cursor1.execute(self.sql)
+            else:
+                self.sql = "SELECT matricula FROM vehiculos WHERE usuario_id = %s"
+                valores = (usrLoggedId,)
+                self.cursor1.execute(self.sql, valores)
+            rows = self.cursor1.fetchall()
+            return rows
+        except Exception as e:
+            print(e)
+            return False
+

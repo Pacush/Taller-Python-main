@@ -7,7 +7,7 @@ class conexion:
         self.password=""
         self.database="dbtaller_mecanico"
         self.host="localhost"
-        self.port="3307"
+        self.port="3306"
 
     def open(self):
         self.conn=mysql.connector.connect(host=self.host,

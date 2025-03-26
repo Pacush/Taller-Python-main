@@ -30,7 +30,7 @@ class dbusuarios:
                 self.conn.close()
         except Exception as e:
             print(e)
-            return aux
+            return None
         
 
     def obtenerUsuarios(self):

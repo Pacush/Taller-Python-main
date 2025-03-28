@@ -73,15 +73,31 @@ class App(tk.Tk):
         self.menu_bar = tk.Menu(self)
         
         self.menu_archivo = tk.Menu(self.menu_bar, tearoff=0)
-        self.menu_archivo.add_command(label="Usuario", command=lambda: ventanaUsuarios(self))
+        print(userLogged.getPerfil())
+        if userLogged.getPerfil() == "Administrador":
+            self.menu_archivo.add_command(label="Usuario", command=lambda: ventanaUsuarios(self))
+        else:
+            self.menu_archivo.add_command(label="Usuario", command=lambda: ventanaUsuarios(self), state="disabled")
         self.menu_archivo.add_separator()
-        self.menu_archivo.add_command(label="Clientes", command=lambda: ventanaClientes(self))
+        if userLogged.getPerfil() in ["Administrador", "Auxiliar"]:
+            self.menu_archivo.add_command(label="Clientes", command=lambda: ventanaClientes(self))
+        else:
+            self.menu_archivo.add_command(label="Clientes", command=lambda: ventanaClientes(self), state="disabled")
         self.menu_archivo.add_separator()
-        self.menu_archivo.add_command(label="Vehiculos", command=lambda: ventanaVehiculos(self))
+        if userLogged.getPerfil() in ["Administrador", "Auxiliar"]:
+            self.menu_archivo.add_command(label="Vehiculos", command=lambda: ventanaVehiculos(self))
+        else:
+            self.menu_archivo.add_command(label="Vehiculos", command=lambda: ventanaVehiculos(self), state="disabled")
         self.menu_archivo.add_separator()
-        self.menu_archivo.add_command(label="Reparaciones", command=lambda: ventanaReparaciones(self))
+        if userLogged.getPerfil() in ["Administrador", "Mecanico"]:
+            self.menu_archivo.add_command(label="Reparaciones", command=lambda: ventanaReparaciones(self))
+        else:
+            self.menu_archivo.add_command(label="Reparaciones", command=lambda: ventanaReparaciones(self), state="disabled")
         self.menu_archivo.add_separator()
-        self.menu_archivo.add_command(label="Piezas", command=lambda: ventanaPiezas(self))
+        if userLogged.getPerfil() in ["Administrador"]:
+            self.menu_archivo.add_command(label="Piezas", command=lambda: ventanaPiezas(self))
+        else:
+            self.menu_archivo.add_command(label="Piezas", command=lambda: ventanaPiezas(self), state="disabled")
         self.menu_archivo.add_separator()
         self.menu_archivo.add_command(label="Salir", command=lambda: salir())
         
@@ -155,7 +171,7 @@ def ventanaUsuarios(app: App):
     btn_editar.pack(side="left", padx=5)
     btn_remover.pack(side="left", padx=5)
     
-    if app.userLogged.getPerfil() != "Administrador" or app.userLogged.getPerfil() != "Auxiliar": btn_nuevo.config(state="disabled")
+    if app.userLogged.getPerfil() != "Administrador": btn_nuevo.config(state="disabled")
     
 
     def buttonGuardar_clicked():
@@ -333,7 +349,7 @@ def ventanaClientes(app: App):
     
     label_telefono = tk.Label(ventana, text="Telefono:", bg="black", fg="white")
     label_telefono.place(x=30, y=140)
-    entry_telefono = tk.Entry(ventana, width=30, show="*")
+    entry_telefono = tk.Entry(ventana, width=30)
     entry_telefono.place(x=100, y=140)
     
     label_usuario_id = tk.Label(ventana, text="Usuario ID:", bg="black", fg="white")
@@ -383,11 +399,11 @@ def ventanaClientes(app: App):
                 entry_telefono.delete(0, END)
                 entry_telefono.insert(0, auxCli.getTelefono())
                 
-                if cli_.getUsuarioID() == app.userLogged.getID() or app.userLogged.getPerfil() == "Administrador" or app.userLogged.getPerfil() == "Auxiliar":
-                    btn_cancelar.config(state="normal")
+                if app.userLogged.getPerfil() == "Administrador":
                     btn_editar.config(state="normal")
                     btn_remover.config(state="normal")
-                
+
+                btn_cancelar.config(state="normal")
                 
             else:
                 messagebox.showerror("Cliente no encontrado", "El cliente no se encuentra registrado en la DB.")
@@ -490,10 +506,8 @@ def ventanaClientes(app: App):
         entry_nombre.delete(0, END)
         entry_rfc.delete(0, END)
         entry_telefono.delete(0, END)
-        if app.userLogged.getPerfil() == "Administrador" or app.userLogged.getPerfil() == "Auxiliar":
-            btn_nuevo.config(state="normal")
-        else:
-            btn_nuevo.config(state="disabled")
+
+        btn_nuevo.config(state="normal")
         btn_cancelar.config(state="disabled")
         btn_editar.config(state="disabled")
         btn_remover.config(state="disabled")
@@ -578,10 +592,6 @@ def ventanaVehiculos(app: App):
     btn_editar.pack(side="left", padx=5)
     btn_remover.pack(side="left", padx=5)
     
-    if app.userLogged.getPerfil() == "Administrador" or app.userLogged.getPerfil() == "Auxiliar":
-        btn_nuevo.config(state="normal")
-    else:
-        btn_nuevo.config(state="disabled")
     
     vehSearched = tk.StringVar()
 
@@ -603,8 +613,10 @@ def ventanaVehiculos(app: App):
                 entry_modelo.delete(0, END)
                 entry_modelo.insert(0, auxVeh.getModelo())
                 btn_cancelar.config(state="normal")
-                btn_editar.config(state="normal")
-                btn_remover.config(state="normal")
+                btn_nuevo.config(state="disabled")
+                if isAdmin:
+                    btn_editar.config(state="normal")
+                    btn_remover.config(state="normal")
             else:
                 messagebox.showerror("Vehiculo no encontrado", "El vehiculo no se encuentra registrado en la DB.")
                 ventana.focus()
@@ -614,7 +626,7 @@ def ventanaVehiculos(app: App):
             ventana.focus()
 
     def buttonGuardar_clicked():
-        
+
         veh_ = veh.Vehiculo()
         veh_.setMatricula(entry_matricula.get())
         
@@ -650,6 +662,7 @@ def ventanaVehiculos(app: App):
                 entry_marca.delete(0, END)
                 entry_modelo.delete(0, END)
                 btn_guardar.config(state="disabled")
+                btn_cancelar.config(state="disabled")
                 btn_nuevo.config(state="normal")
                 
             except Exception as e:
@@ -657,8 +670,13 @@ def ventanaVehiculos(app: App):
                 print(e)
     
     def buttonNuevo_clicked():
-        
+        entry_matricula.delete(0, END)
+        entry_id_buscar.delete(0, END)
+        combo_cliente.delete(0, END)
+        entry_marca.delete(0, END)
+        entry_modelo.delete(0, END)
         btn_guardar.config(state="normal")
+        btn_cancelar.config(state="normal")
         
     def buttonEditar_clicked():
         try:
@@ -678,7 +696,7 @@ def ventanaVehiculos(app: App):
                 auxVehiculo.setMarca(entry_marca.get())
                 auxVehiculo.setModelo(entry_modelo.get())
                 auxVehiculo.setUsuarioID(app.userLogged.getID())
-                print([auxVehiculo.getMatricula(), auxVehiculo.getClienteID(), auxVehiculo.getMarca(), auxVehiculo.getModelo(), auxVehiculo.getUsuarioID()])
+    
                 edicion = app.dbv.editarVehiculos(auxVehiculo, vehSearched.get())
                 if edicion:
                     messagebox.showinfo("Edición exitosa", "Se han editado correctamente los datos del vehiculo.")
@@ -701,6 +719,7 @@ def ventanaVehiculos(app: App):
         entry_marca.delete(0, END)
         entry_modelo.delete(0, END)
         btn_nuevo.config(state="normal")
+        btn_guardar.config(state="disabled")
         btn_cancelar.config(state="disabled")
         btn_editar.config(state="disabled")
         btn_remover.config(state="disabled")
@@ -927,14 +946,19 @@ def ventanaReparaciones(app: App):
     ventana.title("Reparaciones")
     
     isAdmin = app.userLogged.getPerfil() == "Administrador"
-    pizNombresID = app.dbr.dictPiezasId()
+    pizNombresIDCant = app.dbp.dictPiezasId()
     pizNombres = []
     pizIDs = []
-    for pieza in pizNombresID:
+    pizCants = []
+    for pieza in pizNombresIDCant:
         pizIDs.append(int(pieza[0]))
         pizNombres.append(pieza[1])
-
-    vehMatriculas = app.dbv.vehMatriculas(app.userLogged.getID(), isAdmin)
+        pizCants.append(int(pieza[2]))
+    vehMatriculas = []
+    valoresMatriculas = app.dbv.vehMatriculas(app.userLogged.getID(), isAdmin)
+    for valor in valoresMatriculas:
+        vehMatriculas.append(valor[0])
+    
     
     label_folio_buscar = tk.Label(ventana, text="Ingrese folio a buscar:", bg="black", fg="white")
     label_folio_buscar.place(x=30, y=10)
@@ -945,7 +969,7 @@ def ventanaReparaciones(app: App):
     
     label_folio = tk.Label(ventana, text="Folio:", bg="black", fg="white")
     label_folio.place(x=30, y=50)
-    entry_folio = tk.Entry(ventana)
+    entry_folio = tk.Entry(ventana, state="disabled")
     entry_folio.place(x=115, y=50)
     
     label_pieza = tk.Label(ventana, text="Pieza:", bg="black", fg="white")
@@ -994,8 +1018,8 @@ def ventanaReparaciones(app: App):
     frame_botones2 = tk.Frame(ventana, bg="black")
     frame_botones2.place(x=30, y=500)
     
-    btn_agregar = tk.Button(frame_botones1, text="Agregar", state="normal", command=lambda: print("Agregar"))
-    btn_quitar = tk.Button(frame_botones1, text="Quitar", state="normal", command=lambda: print("Quitar"))
+    btn_agregar = tk.Button(frame_botones1, text="Agregar", state="disabled", command=lambda: buttonAgregar_clicked())
+    btn_quitar = tk.Button(frame_botones1, text="Quitar", state="disabled", command=lambda: buttonQuitar_clicked(tabla.selection()))
     
     btn_nuevo = tk.Button(frame_botones2, text="Nuevo", state="normal", command=lambda: buttonNuevo_clicked())
     btn_guardar = tk.Button(frame_botones2, text="Guardar", state="disabled", command=lambda: buttonGuardar_clicked())
@@ -1013,14 +1037,70 @@ def ventanaReparaciones(app: App):
 
     btn_nuevo.config(state="normal")
     
+    def buttonAgregar_clicked():
+        if entry_folio.get() == "" or combo_pieza.get() == "" or combo_matricula.get() == "" or entry_fecha_entrada.get() == "" or entry_fecha_salida.get() == "" or entry_cantidad.get() == "":
+            messagebox.showerror("Campos faltantes", "Faltan campos por llenar para agregar el registro.")
+            ventana.focus()
+        elif not (combo_matricula.get() in vehMatriculas) or not (combo_pieza.get() in pizNombres):
+            messagebox.showerror("Valores inválidos", "Favor de ingresar valores adecuados.")
+            print(vehMatriculas)
+            print(combo_matricula.get())
+            ventana.focus()
+        else:
+            pizId = pizIDs[pizNombres.index(combo_pieza.get())]
+
+            idsTabla = getIdsFromTabla()
+            if len(idsTabla) == 0:
+                aux_detalle_rep_id = int(app.dbr.maxSQL("detalle_id", "detalle_reparacion")[0])
+            else:
+                aux_detalle_rep_id = max(int(app.dbr.maxSQL("detalle_id", "detalle_reparacion")[0]), max(idsTabla))
+
+            try:
+                nuevaCantidadPieza = int(app.dbp.getCantidadPieza(pizId)[0]) - int(entry_cantidad.get())
+            except Exception as e:
+                messagebox.showerror("Cantidad inválida", "Favor de ingresar un número entero para la cantidad.")
+                print(e)
+                ventana.focus()
+                return
+
+            if nuevaCantidadPieza < 0:
+                messagebox.showerror("Inventario no suficiente", "La pieza solicitada no cuenta con la existencia suficiente.")
+                ventana.focus()
+                return
+            
+            agregado = app.dbp.actualizarCantPieza(pizId, nuevaCantidadPieza)
+            if agregado:
+                tabla.insert('', 'end', values=(aux_detalle_rep_id + 1, int(entry_folio.get()), pizId, int(entry_cantidad.get())))
+            else:
+                messagebox.showerror("Error", "Hubo un error al intentar agregar la pieza.")
+                ventana.focus()
+                return
+            
+    def buttonQuitar_clicked(seleccion: ttk.Treeview.selection):
+
+        if not seleccion:
+            messagebox.showerror("Sin selección", "No hay ningún elemento de la tabla seleccionado.")
+            return
+        
+        valores = tabla.item(seleccion[0], "values")
+        idPieza = int(valores[2])
+        cantPieza = int(valores[3])
+        nuevaCantidad = int(app.dbp.getCantidadPieza(idPieza)[0]) + cantPieza
+
+        app.dbp.actualizarCantPieza(idPieza, nuevaCantidad)
+
+        tabla.delete(seleccion[0])
+
     def buttonBuscar_clicked():
         try:
             rep_ = rep.Reparacion()
             rep_.setFolio(entry_folio_buscar.get())
             auxRep = app.dbr.buscarReparacion(rep_, [app.userLogged.getID(), app.userLogged.getPerfil()])
             if auxRep:
+                entry_folio.config(state="normal")
                 entry_folio.delete(0, END)
                 entry_folio.insert(0, auxRep.getFolio())
+                entry_folio.config(state="disabled")
                 combo_pieza.delete(0, END)
                 combo_matricula.delete(0, END)
                 combo_matricula.insert(0, auxRep.getMatricula())
@@ -1048,42 +1128,71 @@ def ventanaReparaciones(app: App):
 
     def buttonGuardar_clicked():
         
-        veh_ = veh.Vehiculo()
-        veh_.setMatricula(entry_matricula.get())
+        rep_ = rep.Reparacion()
+        rep_.setFolio(entry_folio.get())
+
+        elementosTabla = tabla.get_children()
+        valoresTabla = []
+        for elemento in elementosTabla:
+            valor = tabla.item(elemento, "values")
+            valorInt = []
+            for columna in valor:
+                columnaInt = int(columna)
+                valorInt.append(columnaInt)
+            valoresTabla.append(valorInt)
+
         
-        auxVeh = app.dbv.buscarVehiculos(veh_)
-        
-        if entry_matricula.get() == "" or combo_cliente.get() == "" or entry_marca.get() == "" or entry_modelo.get() == "":
+        if entry_folio.get() == "" or combo_pieza.get() == "" or combo_matricula.get() == "" or entry_fecha_entrada.get() == "" or entry_fecha_salida.get() == "" or entry_cantidad.get() == "":
             messagebox.showerror("Campos faltantes", "Faltan campos por llenar para guardar el registro.")
             ventana.focus()
             
-        elif not (combo_cliente.get() in cliNombres):
+        elif not (combo_matricula.get() in vehMatriculas) or not (combo_pieza.get() in pizNombres):
             messagebox.showerror("Valores inválidos", "Favor de ingresar valores adecuados.")
             ventana.focus()
-            
-        elif auxVeh != None:
-            messagebox.showerror("Matrícula repetida", "La matrícula ingresada ya está ingresada en los registros.")
+
+        elif len(elementosTabla) == 0:
+            messagebox.showerror("Reparacion sin detalles", "Favor de ingresar detalles de la reparación (piezas y cantidades).")
             ventana.focus()
         
         else:
-            cliID = cliIDs[cliNombres.index(combo_cliente.get())]
-            auxVehiculo= veh.Vehiculo()
-            auxVehiculo.setMatricula(entry_matricula.get())
-            auxVehiculo.setClienteID(cliID)
-            auxVehiculo.setMarca(entry_marca.get())
-            auxVehiculo.setModelo(entry_modelo.get())
-            auxVehiculo.setUsuarioID(app.userLogged.getID())
+            auxReparacion= rep.Reparacion()
+            auxReparacion.setFolio(int(entry_folio.get()))
+            auxReparacion.setMatricula(combo_matricula.get())
+            auxReparacion.setFechaEntrada(entry_fecha_entrada.get())
+            auxReparacion.setFechaSalida(entry_fecha_salida.get())
+            auxReparacion.setUsuarioID(int(entry_usuario_id.get()))
             try:
-                app.dbv.guardarVehiculo(auxVehiculo)
-                messagebox.showinfo("Registro exitoso", f"Se ha guardado correctamente al vehiculo con la matricula {auxVehiculo.getMatricula()}. Se registra bajo el username {app.userLogged.getUsername()}", )
-                ventana.focus()
+                app.dbr.guardarReparacion(auxReparacion)
                 
-                entry_matricula.delete(0, END)
-                combo_cliente.delete(0, END)
-                entry_marca.delete(0, END)
-                entry_modelo.delete(0, END)
-                btn_guardar.config(state="disabled")
+                ventana.focus()
+
+                for valor in valoresTabla:
+                    try:
+                        app.dbr.guardarDetalleReparacion(valor)
+                    except Exception as e:
+                        print(e)
+                        messagebox.showerror("Error", "Hubo un error")
+                        
+                messagebox.showinfo("Registro exitoso", f"Se ha guardado correctamente la reparación con el folio matricula {auxReparacion.getFolio()}. Se registra bajo el username {app.userLogged.getUsername()}")
+                
+                borrarYActualizarTabla()
+                entry_folio_buscar.delete(0, END)
+                entry_folio.config(state="normal")
+                entry_folio.delete(0, END)
+                entry_folio.config(state="disabled")
+                combo_pieza.delete(0, END)
+                combo_matricula.delete(0, END)
+                entry_fecha_entrada.delete(0, END)
+                entry_fecha_salida.delete(0, END)
+                entry_cantidad.delete(0, END)
+                entry_usuario_id.delete(0, END)
                 btn_nuevo.config(state="normal")
+                btn_cancelar.config(state="disabled")
+                btn_editar.config(state="disabled")
+                btn_remover.config(state="disabled")
+                btn_guardar.config(state="disabled")
+                btn_agregar.config(state="disabled")
+                btn_quitar.config(state="disabled")
                 
             except Exception as e:
                 messagebox.showerror("Error", "Hubo un error al intentar ingresar el registro. Revisa tus datos.")
@@ -1091,7 +1200,31 @@ def ventanaReparaciones(app: App):
     
     def buttonNuevo_clicked():
         
+        maxFolio = app.dbr.maxSQL("folio", "reparaciones")[0]
+        if maxFolio == 0:
+            newFolio = 1
+        else:
+            newFolio = maxFolio + 1
+
+        entry_folio.config(state="normal")
+        entry_folio.delete(0, END)
+        entry_folio.insert(0, newFolio)
+        entry_folio.config(state="disabled")
+        combo_pieza.delete(0, END)
+        combo_matricula.delete(0, END)
+        entry_fecha_entrada.delete(0, END)
+        entry_fecha_salida.delete(0, END)
+        entry_cantidad.delete(0, END)
+        entry_usuario_id.delete(0, END)
+
+        borrarYActualizarTabla()
+
+        tabla.delete(*tabla.get_children())
+
         btn_guardar.config(state="normal")
+        btn_cancelar.config(state="normal")
+        btn_agregar.config(state="normal")
+        btn_quitar.config(state="normal")
         
     def buttonEditar_clicked():
         try:
@@ -1128,15 +1261,44 @@ def ventanaReparaciones(app: App):
             print(e)
 
     def buttonCancelar_clicked():
-        entry_matricula.delete(0, END)
-        entry_id_buscar.delete(0, END)
-        combo_cliente.delete(0, END)
-        entry_marca.delete(0, END)
-        entry_modelo.delete(0, END)
+
+        borrarYActualizarTabla()
+
+        entry_folio_buscar.delete(0, END)
+        entry_folio.config(state="normal")
+        entry_folio.delete(0, END)
+        entry_folio.config(state="disabled")
+        combo_pieza.delete(0, END)
+        combo_matricula.delete(0, END)
+        entry_fecha_entrada.delete(0, END)
+        entry_fecha_salida.delete(0, END)
+        entry_cantidad.delete(0, END)
+        entry_usuario_id.delete(0, END)
+
+        tabla.delete(*tabla.get_children())
+
         btn_nuevo.config(state="normal")
         btn_cancelar.config(state="disabled")
         btn_editar.config(state="disabled")
         btn_remover.config(state="disabled")
+        btn_guardar.config(state="disabled")
+        btn_agregar.config(state="disabled")
+        btn_quitar.config(state="disabled")
+
+    def borrarYActualizarTabla():
+        elementos = tabla.get_children()
+
+        for elemento in elementos:
+            buttonQuitar_clicked((elemento, ))
+
+    def getIdsFromTabla():
+        elementos = tabla.get_children()
+        idsList = []
+        for elemento in elementos:
+            valores = tabla.item(elemento, "values")
+            idsList.append(int(valores[0]))
+        return idsList
+
         
     def ventanaEliminarVehiculo():
         auxVeh = veh.Vehiculo()

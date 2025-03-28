@@ -98,6 +98,9 @@ class dbclientes:
 
     def rfcsClientes(self):
         try:
+            self.con = con.conexion()
+            self.conn = self.con.open()
+            self.cursor1 = self.conn.cursor()
             self.sql = "SELECT rfc nombre FROM clientes"
             #valores = (usrLoggedId,)
             self.cursor1.execute(self.sql)

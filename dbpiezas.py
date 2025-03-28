@@ -77,9 +77,38 @@ class dbpiezas:
             self.con = con.conexion()
             self.conn = self.con.open()
             self.cursor1 = self.conn.cursor()
-            self.sql = "SELECT pieza_id, descripcion FROM piezas"
+            self.sql = "SELECT pieza_id, descripcion, existencia FROM piezas"
             self.cursor1.execute(self.sql)
             rows = self.cursor1.fetchall()
+            return rows
+        except Exception as e:
+            print(e)
+            return False
+
+    def actualizarCantPieza(self, id: int, nuevaCantidad: int):
+        try:
+            self.con = con.conexion()
+            self.conn = self.con.open()
+            self.cursor1 = self.conn.cursor()
+            self.sql = "UPDATE piezas SET existencia = %s WHERE pieza_id = %s;"
+            valores = (nuevaCantidad, id)
+            self.cursor1.execute(self.sql, valores)
+            self.conn.commit()
+            self.con.close()
+            return True
+        except Exception as e:
+            print(e)
+            return False
+        
+    def getCantidadPieza(self, id: int):
+        try:
+            self.con = con.conexion()
+            self.conn = self.con.open()
+            self.cursor1 = self.conn.cursor()
+            self.sql = "SELECT existencia FROM piezas WHERE pieza_id = %s"
+            valores = (id, )
+            self.cursor1.execute(self.sql, valores)
+            rows = self.cursor1.fetchone()
             return rows
         except Exception as e:
             print(e)

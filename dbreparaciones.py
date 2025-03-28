@@ -78,18 +78,6 @@ class dbreparaciones:
             print(e)
             return False
         
-    def dictPiezasId(self):
-        try:
-            self.con = con.conexion()
-            self.conn = self.con.open()
-            self.cursor1 = self.conn.cursor()
-            self.sql = "SELECT pieza_id, descripcion FROM piezas"
-            self.cursor1.execute(self.sql)
-            rows = self.cursor1.fetchall()
-            return rows
-        except Exception as e:
-            print(e)
-            return False
         
     def detallesRep(self, folio: int):
         try:
@@ -104,3 +92,16 @@ class dbreparaciones:
         except Exception as e:
             print(e)
             return False
+
+    def guardarDetalleReparacion(self, detalle_rep: list):
+        self.con = con.conexion()
+        self.conn = self.con.open()
+        self.cursor1 = self.conn.cursor()
+        self.sql = "INSERT INTO detalle_reparacion (detalle_id, folio, pieza_id, cantidad) values (%s, %s, %s, %s)"
+        self.datos=(detalle_rep[0],
+                    detalle_rep[1],
+                    detalle_rep[2],
+                    detalle_rep[3])
+        self.cursor1.execute(self.sql, self.datos)
+        self.conn.commit()
+        self.conn.close()

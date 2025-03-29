@@ -105,3 +105,39 @@ class dbreparaciones:
         self.cursor1.execute(self.sql, self.datos)
         self.conn.commit()
         self.conn.close()
+
+    def buscarReparacionMatricula(self, rep: rep.Reparacion, usrLogged: list):
+        self.con = con.conexion()
+        self.conn = self.con.open()
+        self.cursor1 = self.conn.cursor()
+        if usrLogged[1] == "Administrador":
+            self.sql = "SELECT * FROM reparaciones WHERE folio=%s AND matricula = %s"
+            self.datos=(rep.getFolio(), rep.getMatricula())
+        else:
+            self.sql = "SELECT * FROM reparaciones WHERE folio=%s AND matricula = %s AND usuario_id =%s"
+            self.datos=(rep.getFolio(), rep.getMatricula(), usrLogged[0])
+        self.cursor1.execute(self.sql, self.datos)
+        aux = None
+        row = self.cursor1.fetchone()
+        if row is not None:
+            aux = rep
+            aux.setFolio(int(row[0]))
+            aux.setMatricula(row[1])
+            aux.setFechaEntrada(row[2])
+            aux.setFechaSalida(row[3])
+            aux.setUsuarioID(int(row[4]))
+        return aux
+    
+    def eliminarDetalleReparacion(self, detalle_id: int):
+        try:
+            self.con = con.conexion()
+            self.conn = self.con.open()
+            self.cursor1 = self.conn.cursor()
+            self.sql = "DELETE FROM detalle_reparacion WHERE detalle_id = %s"
+            valores = (detalle_id,)
+            self.cursor1.execute(self.sql, valores)
+            self.conn.commit()
+            return True
+        except Exception as e:
+            print(e)
+            return False

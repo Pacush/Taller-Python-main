@@ -940,7 +940,6 @@ def ventanaPiezas(app: App):
         else:
             ventana.focus()
 
-
 global valoresTabla, valoresQuitados, valoresAgregados
 valoresTabla = {}
 valoresQuitados = []
@@ -961,12 +960,10 @@ def ventanaReparaciones(app: App):
         pizNombres.append(pieza[1])
         pizCants.append(int(pieza[2]))
     vehMatriculas = []
-    valoresMatriculas = app.dbv.vehMatriculas(app.userLogged.getID(), isAdmin)
+    valoresMatriculas = app.dbv.vehMatriculas(app.userLogged.getID(), True)
     for valor in valoresMatriculas:
         vehMatriculas.append(valor[0])
 
-    
-    
     label_folio_buscar = tk.Label(ventana, text="Ingrese folio a buscar:", bg="black", fg="white")
     label_folio_buscar.place(x=30, y=10)
     entry_folio_buscar = tk.Entry(ventana, width=30)
@@ -1149,11 +1146,14 @@ def ventanaReparaciones(app: App):
                 entry_fecha_salida.delete(0, END)
                 entry_fecha_salida.insert(0, auxRep.getFechaSalida())
                 entry_cantidad.delete(0, END)
-                btn_agregar.config(state="normal")
-                btn_quitar.config(state="normal")
+
+                if app.userLogged.getPerfil()=="Administrador":
+                    btn_agregar.config(state="normal")
+                    btn_quitar.config(state="normal")
+                    btn_editar.config(state="normal")
+                    btn_remover.config(state="normal")
+
                 btn_cancelar.config(state="normal")
-                btn_editar.config(state="normal")
-                btn_remover.config(state="normal")
 
                 detalles_reparacion = app.dbr.detallesRep(auxRep.getFolio())
 
@@ -1401,8 +1401,7 @@ def ventanaReparaciones(app: App):
             valores = tabla.item(elemento, "values")
             idsList.append(int(valores[0]))
         return idsList
-
-        
+     
     def ventanaEliminarReparacion():
         auxRep = rep.Reparacion()
         auxRep.setFolio(int(entry_folio.get()))

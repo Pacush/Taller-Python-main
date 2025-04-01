@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 13, 2025 at 02:02 AM
+-- Generation Time: Apr 01, 2025 at 05:50 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.1.25
 
@@ -35,6 +35,15 @@ CREATE TABLE `clientes` (
   `telefono` varchar(10) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
+--
+-- Dumping data for table `clientes`
+--
+
+INSERT INTO `clientes` (`cliente_id`, `usuario_id`, `nombre`, `rfc`, `telefono`) VALUES
+(1, 1, 'Joss', '123423425', '2354'),
+(2, 1, 'Batman', 'SANFIJF3908', '3124235'),
+(3, 3, 'Superman', 'WOGN', '33145');
+
 -- --------------------------------------------------------
 
 --
@@ -47,6 +56,18 @@ CREATE TABLE `detalle_reparacion` (
   `pieza_id` int(10) DEFAULT NULL,
   `cantidad` int(10) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `detalle_reparacion`
+--
+
+INSERT INTO `detalle_reparacion` (`detalle_id`, `folio`, `pieza_id`, `cantidad`) VALUES
+(1, 1, 1, 5),
+(2, 1, 1, 1),
+(3, 2, 1, 1),
+(6, 4, 3, 5),
+(7, 4, 2, 3),
+(8, 5, 2, 1);
 
 -- --------------------------------------------------------
 
@@ -61,6 +82,15 @@ CREATE TABLE `piezas` (
   `precio` double NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
+--
+-- Dumping data for table `piezas`
+--
+
+INSERT INTO `piezas` (`pieza_id`, `descripcion`, `existencia`, `precio`) VALUES
+(1, 'Bujía', 30, 50),
+(2, 'Pieza2', 19, 20.5),
+(3, 'Pieza3', 40, 30.99);
+
 -- --------------------------------------------------------
 
 --
@@ -71,8 +101,20 @@ CREATE TABLE `reparaciones` (
   `folio` int(10) NOT NULL,
   `matricula` varchar(10) NOT NULL,
   `fecha_entrada` varchar(10) NOT NULL,
-  `fecha_salida` varchar(10) NOT NULL
+  `fecha_salida` varchar(10) NOT NULL,
+  `usuario_id` int(10) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+--
+-- Dumping data for table `reparaciones`
+--
+
+INSERT INTO `reparaciones` (`folio`, `matricula`, `fecha_entrada`, `fecha_salida`, `usuario_id`) VALUES
+(1, 'X02', '1', '1', 1),
+(2, 'X02', '1', '1', 1),
+(3, 'X03', '2', '2', 1),
+(4, 'X01', '1', '1', 1),
+(5, 'X01', '1', '1', 4);
 
 -- --------------------------------------------------------
 
@@ -88,6 +130,16 @@ CREATE TABLE `usuarios` (
   `perfil` varchar(20) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `usuarios`
+--
+
+INSERT INTO `usuarios` (`usuario_id`, `nombre`, `username`, `password`, `perfil`) VALUES
+(1, 'Joss', 'Joss', 'Joss', 'Administrador'),
+(2, 'Katy', 'Katy', 'Katy', 'Administrador'),
+(3, 'Di', 'Di', 'Di', 'Auxiliar'),
+(4, 'Ziz', 'Ziz', 'Ziz', 'Mecanico');
+
 -- --------------------------------------------------------
 
 --
@@ -98,8 +150,18 @@ CREATE TABLE `vehiculos` (
   `matricula` varchar(10) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   `cliente_id` int(10) NOT NULL,
   `marca` varchar(20) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
-  `modelo` varchar(20) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL
+  `modelo` varchar(20) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+  `usuario_id` int(10) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `vehiculos`
+--
+
+INSERT INTO `vehiculos` (`matricula`, `cliente_id`, `marca`, `modelo`, `usuario_id`) VALUES
+('X01', 2, 'Dodge', 'Charger', 1),
+('X02', 2, 'asf', 'sdf', 1),
+('X03', 3, 'Coche', 'Coche', 3);
 
 --
 -- Indexes for dumped tables
@@ -117,8 +179,8 @@ ALTER TABLE `clientes`
 --
 ALTER TABLE `detalle_reparacion`
   ADD PRIMARY KEY (`detalle_id`),
-  ADD KEY `folio_fk` (`folio`),
-  ADD KEY `pieza_id_fk` (`pieza_id`);
+  ADD KEY `pieza_id_fk` (`pieza_id`),
+  ADD KEY `folio_fk` (`folio`);
 
 --
 -- Indexes for table `piezas`
@@ -131,7 +193,8 @@ ALTER TABLE `piezas`
 --
 ALTER TABLE `reparaciones`
   ADD PRIMARY KEY (`folio`),
-  ADD KEY `matriucla_fk` (`matricula`);
+  ADD KEY `matriucla_fk` (`matricula`),
+  ADD KEY `usuario_id_rep_fk` (`usuario_id`);
 
 --
 -- Indexes for table `usuarios`
@@ -144,6 +207,7 @@ ALTER TABLE `usuarios`
 --
 ALTER TABLE `vehiculos`
   ADD PRIMARY KEY (`matricula`),
+  ADD KEY `usuario_id` (`usuario_id`),
   ADD KEY `cliente_id_fk` (`cliente_id`);
 
 --
@@ -160,20 +224,22 @@ ALTER TABLE `clientes`
 -- Constraints for table `detalle_reparacion`
 --
 ALTER TABLE `detalle_reparacion`
-  ADD CONSTRAINT `folio_fk` FOREIGN KEY (`folio`) REFERENCES `reparaciones` (`folio`),
+  ADD CONSTRAINT `folio_fk` FOREIGN KEY (`folio`) REFERENCES `reparaciones` (`folio`) ON DELETE CASCADE,
   ADD CONSTRAINT `pieza_id_fk` FOREIGN KEY (`pieza_id`) REFERENCES `piezas` (`pieza_id`);
 
 --
 -- Constraints for table `reparaciones`
 --
 ALTER TABLE `reparaciones`
-  ADD CONSTRAINT `matriucla_fk` FOREIGN KEY (`matricula`) REFERENCES `vehiculos` (`matricula`);
+  ADD CONSTRAINT `matriucla_fk` FOREIGN KEY (`matricula`) REFERENCES `vehiculos` (`matricula`),
+  ADD CONSTRAINT `usuario_id_rep_fk` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`usuario_id`);
 
 --
 -- Constraints for table `vehiculos`
 --
 ALTER TABLE `vehiculos`
-  ADD CONSTRAINT `cliente_id_fk` FOREIGN KEY (`cliente_id`) REFERENCES `clientes` (`cliente_id`);
+  ADD CONSTRAINT `cliente_id_fk` FOREIGN KEY (`cliente_id`) REFERENCES `clientes` (`cliente_id`),
+  ADD CONSTRAINT `vehiculos_usuario_id_fk` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`usuario_id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

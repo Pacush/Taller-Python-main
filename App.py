@@ -2,16 +2,15 @@ import tkinter as tk
 from tkinter import END, Toplevel, messagebox, ttk
 
 import cliente as cli
-import usuario as usr
-import vehiculo as veh
-import pieza as piz
-import reparacion as rep
 import dbclientes as dbc
-import dbusuarios as dbu
-import dbvehiculos as dbv
 import dbpiezas as dbp
 import dbreparaciones as dbr
-
+import dbusuarios as dbu
+import dbvehiculos as dbv
+import pieza as piz
+import reparacion as rep
+import usuario as usr
+import vehiculo as veh
 
 perfiles = ["Administrador", "Auxiliar", "Mecanico"]
 
@@ -1096,7 +1095,7 @@ def ventanaReparaciones(app: App):
             
             valoresTabla[tabla.get_children()[len(tabla.get_children())-1]] = valorInt
             print(valoresTabla)
-   
+
     def buttonQuitar_clicked(seleccion: ttk.Treeview.selection):
 
         global valoresTabla
@@ -1113,9 +1112,8 @@ def ventanaReparaciones(app: App):
         nuevaCantidad = int(app.dbp.getCantidadPieza(idPieza)[0]) + cantPieza
         valores = list(valores)
         
-        print(valoresTabla)
         valoresTabla.pop(seleccion[0])
-        
+        print(valoresTabla)
 
         for i in range(len(valores)):
             valores[i] = int(valores[i])
@@ -1401,7 +1399,7 @@ def ventanaReparaciones(app: App):
             valores = tabla.item(elemento, "values")
             idsList.append(int(valores[0]))
         return idsList
-     
+
     def ventanaEliminarReparacion():
         auxRep = rep.Reparacion()
         auxRep.setFolio(int(entry_folio.get()))
